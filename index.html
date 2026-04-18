@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Med Flash — Canadian Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --card: #1a2235;
+  --border: #2a3a55;
+  --accent: #38bdf8;
+  --accent2: #f472b6;
+  --green: #4ade80;
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, serif;
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+
+/* ══════════════════════════════════════════
+   PLATFORM-AWARE SEARCH
+   body gets class: platform-ios | platform-ipados | platform-macos
+   ══════════════════════════════════════════ */
+
+/* ── iPadOS: sticky search bar always visible at top ── */
+.ipad-search-bar {
+  display: none;
+  position: sticky; top: 0; z-index: 150;
+  background: var(--bg);
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.platform-ipados .ipad-search-bar { display: block; }
+.platform-ipados .ipad-search-bar .search-container { max-width: 620px; margin: 0 auto; }
+
+/* iPadOS: hide the in-page search wrap on home (ipad bar handles it) */
+.platform-ipados .search-wrap { display: none; }
+
+/* ── iOS: hide in-page search bar, show FAB instead ── */
+.platform-ios .search-wrap { display: none; }
+
+/* iOS search overlay — full screen modal */
+.ios-search-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(10,15,26,0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  flex-direction: column;
+  padding: env(safe-area-inset-top, 20px) 20px 20px;
+  padding-top: max(env(safe-area-inset-top, 20px), 20px);
+}
+.ios-search-overlay.open { display: flex; }
+.ios-overlay-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.ios-overlay-input {
+  flex: 1; background: var(--surface); border: 1.5px solid var(--accent);
+  border-radius: 14px; padding: 13px 18px 13px 44px; color: var(--text);
+  font-size: 1rem; outline: none; position: relative;
+}
+.ios-overlay-wrap {
+  position: relative; flex: 1;
+}
+.ios-overlay-wrap::before {
+  content: '🔍';
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 0.95rem; pointer-events: none; z-index: 1;
+}
+.ios-cancel-btn {
+  background: none; border: none; color: var(--accent);
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; padding: 4px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.ios-overlay-results {
+  flex: 1; overflow-y: auto; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── iPadOS Apple Pencil hover search bubble ── */
+.pencil-bubble {
+  display: none;
+  position: fixed; z-index: 600;
+  background: var(--surface);
+  border: 1.5px solid var(--accent);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(56,189,248,0.15);
+  padding: 10px 14px;
+  min-width: 280px; max-width: 340px;
+  pointer-events: none;          /* invisible until Pencil hovers */
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.pencil-bubble.visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.pencil-bubble-inner {
+  position: relative;
+}
+.pencil-bubble-inner::before {
+  content: '✏️';
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 0.85rem; pointer-events: none;
+}
+.pencil-bubble-input {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 9px 12px 9px 34px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  caret-color: var(--accent);
+}
+.pencil-bubble-input:focus { border-color: var(--accent); }
+.pencil-bubble-hint {
+  font-size: 0.65rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 6px;
+}
+.pencil-bubble-results {
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 6px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.platform-ipados .pencil-bubble { display: block; }
+.platform-macos .search-wrap { display: none; }
+.mac-search-hint {
+  display: none;
+  text-align: center; margin-bottom: 18px;
+}
+.platform-macos .mac-search-hint { display: block; }
+.mac-search-hint button {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 14px; color: var(--muted);
+  font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.mac-search-hint button:hover { border-color: var(--accent); color: var(--text); }
+.mac-search-hint kbd {
+  background: var(--border); border-radius: 4px;
+  padding: 1px 6px; font-size: 0.72rem; font-weight: 700;
+  color: var(--text); font-family: inherit;
+}
+
+/* macOS: invisible but functional search container (used by keyboard) */
+.mac-hidden-search {
+  position: fixed; top: -200px; left: 0; right: 0;
+  display: flex; justify-content: center; z-index: 500;
+  transition: top 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.mac-hidden-search.mac-open {
+  top: 12px;
+}
+.mac-hidden-search .search-container {
+  width: min(560px, calc(100vw - 40px));
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+.platform-macos .mac-hidden-search { display: flex; }
+.screen { display: none; padding: 24px 16px; }
+.screen.active { display: block; }
+
+/* ── HOME ── */
+.home-header { text-align: center; padding: 32px 16px 20px; }
+.home-header h1 {
+  font-family: 'Syne', sans-serif; font-weight: 800;
+  font-size: clamp(1.8rem, 6vw, 2.6rem); letter-spacing: -1px;
+  background: linear-gradient(120deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.home-header p { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+
+.search-wrap { max-width: 500px; margin: 0 auto 20px; padding: 0 16px; }
+.search-container { position: relative; }
+.search-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 100px; padding: 12px 20px 12px 44px; color: var(--text);
+  font-family: Georgia, serif; font-size: 0.9rem; outline: none;
+  transition: border-color 0.2s, border-radius 0.2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted); }
+.search-container::before {
+  content: '🔍';
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  font-size: 0.9rem; pointer-events: none; z-index: 1;
+}
+.search-container::after {
+  content: '/';
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700;
+  color: var(--muted); background: var(--border);
+  padding: 2px 7px; border-radius: 5px; pointer-events: none;
+  letter-spacing: 0; line-height: 1.6;
+  transition: opacity 0.2s;
+}
+.search-container:focus-within::after { opacity: 0; }
+.search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 100; display: none;
+  max-height: 360px; overflow-y: auto;
+}
+.search-results.open { display: block; }
+.sr-section-label {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--muted); padding: 10px 16px 4px;
+}
+.sr-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; cursor: pointer;
+  transition: background 0.15s; border-bottom: 1px solid rgba(42,58,85,0.4);
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: rgba(56,189,248,0.08); }
+.sr-item-icon { font-size: 1.1rem; flex-shrink: 0; }
+.sr-item-abbr {
+  font-weight: 800;
+  font-size: 0.88rem; color: var(--accent); min-width: 60px;
+}
+.sr-item-info { flex: 1; min-width: 0; }
+.sr-item-name { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-item-alt { font-size: 0.65rem; color: var(--muted); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-item-cat { font-size: 0.68rem; color: var(--muted); }
+.sr-item-val { font-weight: 700; font-size: 0.75rem; color: var(--green); text-align: right; white-space: nowrap; }
+.sr-empty { padding: 16px; text-align: center; color: var(--muted); font-size: 0.82rem; }
+.cat-name {
+  font-weight: 700;
+  font-size: 0.82rem; color: var(--text); line-height: 1.3;
+}
+.back-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font-weight: 700;
+  font-size: 0.78rem; padding: 8px 16px; border-radius: 100px;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--accent); }
+.study-title {
+  font-weight: 800;
+  font-size: 1.1rem; flex: 1;
+}
+.mode-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem; font-weight: 600; padding: 8px 18px;
+  border-radius: 100px; cursor: pointer; transition: all 0.2s;
+}
+.mode-btn:hover { color: var(--text); border-color: var(--accent); }
+.mode-btn.active {
+  background: linear-gradient(120deg, var(--accent), #6366f1);
+  border-color: transparent; color: #fff;
+}
+.ref-table th {
+  font-weight: 700; font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.ref-abbr {
+  font-weight: 800;
+  font-size: 0.9rem; color: var(--accent);
+}
+.ref-name { color: var(--text); font-size: 0.82rem; }
+.ref-alt { color: var(--muted); font-size: 0.7rem; font-style: italic; margin-top: 2px; }
+.ref-val { color: var(--green); font-weight: 700; }
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px; max-width: 620px; margin: 0 auto; padding: 0 16px;
+}
+.cat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 14px;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.2s, transform 0.15s, background 0.2s;
+  animation: fadeUp 0.3s ease both;
+}
+.cat-card:hover { border-color: var(--accent); transform: translateY(-3px); background: #1f2e45; }
+.cat-icon { font-size: 1.8rem; margin-bottom: 8px; }
+.cat-count { font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.study-topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 16px 0; max-width: 560px; margin: 0 auto;
+}
+.mode-tabs { display: flex; gap: 6px; justify-content: center; margin: 16px 16px 20px; flex-wrap: wrap; }
+.mode-panel { display: none; padding: 0 16px; }
+.mode-panel.active { display: block; }
+.ref-table { width: 100%; max-width: 560px; margin: 0 auto; border-collapse: collapse; }
+.ref-table td {
+  padding: 12px 14px; font-size: 0.88rem; line-height: 1.5;
+  border-bottom: 1px solid rgba(42,58,85,0.5); vertical-align: middle;
+}
+.ref-table tr:last-child td { border-bottom: none; }
+.ref-table tr:hover td { background: rgba(56,189,248,0.04); }
+.table-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  max-width: 560px; margin: 0 auto;
+}
+
+/* ── FLASHCARDS ── */
+.fc-area { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 500px; margin: 0 auto; }
+.progress-wrap { width: 100%; background: var(--surface); border-radius: 100px; height: 5px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:100px; transition:width 0.35s ease; }
+.fc-counter { color: var(--muted); font-size: 0.78rem; }
+
+.fc-viewport { width: 100%; overflow: hidden; border-radius: var(--radius); touch-action: pan-y; }
+.fc-track { display: flex; will-change: transform; }
+.fc-slide { flex: 0 0 100%; width: 100%; height: 290px; perspective: 1200px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.flipper { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform 0.45s cubic-bezier(0.4,0,0.2,1); border-radius:var(--radius); }
+.flipper.flipped { transform: rotateY(180deg); }
+.card-face { position:absolute; inset:0; border-radius:var(--radius); backface-visibility:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 30px; text-align:center; }
+.card-front { background:var(--card); border:1px solid var(--border); }
+.card-back { background:linear-gradient(135deg,#0d1f17,#132d1e); border:2px solid var(--green); transform:rotateY(180deg); }
+.card-abbr {
+  /* Inherit the selected body font — only keep size and colour */
+  font-weight: 700;
+  font-size: clamp(2rem, 9vw, 3.2rem);
+  letter-spacing: normal;
+  color: var(--accent);
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+.card-question {
+  /* Inherit body font — standard weight, relaxed spacing */
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text);
+  letter-spacing: normal;
+}
+.card-hint { color:var(--muted); font-size:0.72rem; margin-top:12px; }
+.card-answer { font-weight:800; font-size:clamp(1.4rem,5.5vw,2rem); line-height:1.55; color:var(--green); text-shadow:0 0 28px rgba(74,222,128,0.35); letter-spacing:normal; }
+
+.swipe-hint { color:var(--muted); font-size:0.7rem; letter-spacing:0.03em; transition:opacity 0.5s; }
+.swipe-hint.hidden { opacity:0; }
+.fc-controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.fc-btn { font-weight:700; font-size:0.8rem; padding:10px 20px; border-radius:100px; border:1px solid var(--border); background:var(--surface); color:var(--text); cursor:pointer; transition:all 0.18s; }
+.fc-btn:hover { border-color:var(--accent); color:var(--accent); }
+.fc-btn.primary { background:linear-gradient(120deg,var(--accent),#6366f1); border-color:transparent; color:#fff; }
+.fc-btn.primary:hover { opacity:0.9; }
+
+/* ══════════════════════════════════════════
+   BOTTOM BAR — fixed at bottom, always visible
+   Contains: font controls + flag toggle (top strip)
+   + icon tab bar (bottom strip)
+   ══════════════════════════════════════════ */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
+}
+
+/* ── Top strip: font + flag controls ── */
+.controls-strip {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px 6px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.controls-strip-left  { display: flex; align-items: center; gap: 8px; }
+.controls-strip-right { display: flex; align-items: center; gap: 0; }
+
+/* font style pills */
+.font-toggle {
+  display: flex; align-items: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 100px; overflow: hidden;
+}
+.font-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.7rem; padding: 5px 10px;
+  transition: background 0.15s; line-height: 1;
+  color: var(--muted); font-weight: 600;
+  white-space: nowrap;
+}
+.font-btn.active { background: rgba(56,189,248,0.2); color: var(--text); }
+.font-toggle .font-btn:first-child { border-radius: 100px 0 0 100px; }
+.font-toggle .font-btn:last-child  { border-radius: 0 100px 100px 0; }
+
+/* size adjuster */
+.size-toggle {
+  display: flex; align-items: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 100px; overflow: hidden;
+}
+.size-btn {
+  background: none; border: none; cursor: pointer;
+  padding: 5px 10px; color: var(--muted);
+  font-weight: 700; line-height: 1; transition: background 0.15s;
+  white-space: nowrap;
+}
+.size-btn:hover { background: rgba(56,189,248,0.1); color: var(--text); }
+.size-btn:first-child { border-radius: 100px 0 0 100px; font-size: 0.62rem; }
+.size-btn:last-child  { border-radius: 0 100px 100px 0; font-size: 0.82rem; }
+.size-label {
+  font-size: 0.6rem; font-weight: 700;
+  color: var(--muted); padding: 0 5px;
+  border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  line-height: 26px; min-width: 28px; text-align: center;
+}
+
+/* flag toggle */
+.flag-toggle {
+  display: flex; align-items: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 100px; overflow: hidden;
+}
+.flag-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.05rem; padding: 5px 8px;
+  transition: background 0.15s; line-height: 1;
+}
+.flag-btn.active { background: rgba(56,189,248,0.2); }
+.flag-btn:first-child { border-radius: 100px 0 0 100px; }
+.flag-btn:last-child  { border-radius: 0 100px 100px 0; }
+.flag-divider { width: 1px; height: 20px; background: var(--border); }
+
+/* ── Bottom strip: icon tab bar — REMOVED, replaced by unified bar ── */
+
+/* ══════════════════════════════════════════
+   UNIFIED BOTTOM BAR
+   Row 1 (top):    Mode pills — ref/flash/quiz (study only)
+   Row 2 (middle): Nav — categories (left) · title · search (right)
+   Row 3 (bottom): Controls — font + size + flag
+   ══════════════════════════════════════════ */
+
+/* Body padding = height of the bar.
+   Controls row ~46px + nav row ~52px + mode row ~46px = ~144px
+   Mode row only shows in study, but we pad for it always so
+   content never jumps. */
+body { padding-bottom: calc(148px + env(safe-area-inset-bottom, 0px)); }
+
+/* Size adjuster label font */
+html { font-size: var(--base-font-size, 16px); }
+body.font-sf    { font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif; }
+body.font-serif { font-family: Georgia, 'Times New Roman', serif; }
+body.font-mono  { font-family: 'DM Mono', 'Courier New', monospace; }
+
+/* ── Mode row: Reference / Flashcards / Quiz ── */
+.mode-bar {
+  display: none;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.mode-bar.visible { display: flex; }
+.mode-pill {
+  flex: 1; max-width: 120px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 100px; padding: 8px 6px;
+  font-size: 0.7rem; font-weight: 600; color: var(--muted);
+  cursor: pointer; transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.mode-pill:hover { border-color: var(--accent); color: var(--text); }
+.mode-pill.active {
+  background: linear-gradient(120deg, var(--accent), #6366f1);
+  border-color: transparent; color: #fff;
+}
+.mode-pill svg {
+  width: 13px; height: 13px; flex-shrink: 0;
+  fill: none; stroke: currentColor;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Nav row: categories · [title] · search ── */
+.nav-row {
+  display: flex; align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  background: var(--surface);
+}
+.nav-btn {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn:hover { border-color: var(--accent); background: rgba(56,189,248,0.08); }
+.nav-btn:active { transform: scale(0.92); }
+.nav-btn svg {
+  width: 18px; height: 18px;
+  fill: none; stroke: var(--text);
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.nav-btn.nav-search svg { stroke: var(--accent2); }
+.nav-btn.nav-categories svg { stroke: var(--accent); }
+.nav-title {
+  flex: 1; text-align: center;
+  font-size: 0.72rem; font-weight: 600;
+  color: var(--muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+/* Remove old FAB styles (no longer needed) */
+.fab, .fab-categories, .fab-search { display: none !important; }
+
+/* ── KEYBOARD NAVIGATION ── */
+.sr-item.kb-focus {
+  background: rgba(56,189,248,0.14);
+  border-left: 3px solid var(--accent);
+  padding-left: 13px;
+}
+
+/* ── ROW HIGHLIGHT (when jumping to a parameter) ── */
+@keyframes rowPulse {
+  0%   { background: rgba(74,222,128,0.25); }
+  60%  { background: rgba(74,222,128,0.12); }
+  100% { background: transparent; }
+}
+.ref-row-highlight td { animation: rowPulse 1.8s ease forwards; }
+.quiz-wrap { max-width: 520px; margin: 0 auto; }
+.quiz-q { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:12px; }
+.quiz-q-num { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--accent); margin-bottom:7px; }
+.quiz-q-text { font-weight:700; font-size:0.95rem; line-height:1.5; }
+.quiz-options { display:grid; gap:9px; margin-bottom:14px; }
+.quiz-opt { background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:12px 14px; font-size:0.85rem; color:var(--text); cursor:pointer; text-align:left; transition:all 0.15s; display:flex; align-items:center; gap:10px; }
+.quiz-opt:hover:not(:disabled) { border-color:var(--accent); background:rgba(56,189,248,0.06); }
+.quiz-opt.correct { border-color:var(--green); background:rgba(74,222,128,0.1); color:var(--green); }
+.quiz-opt.wrong   { border-color:var(--red); background:rgba(248,113,113,0.1); color:var(--red); }
+.quiz-opt:disabled { cursor:default; }
+.opt-letter { font-weight:800; font-size:0.75rem; width:22px; height:22px; border-radius:6px; background:var(--border); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--muted); }
+.quiz-opt.correct .opt-letter { background:var(--green); color:#0a0f1a; }
+.quiz-opt.wrong   .opt-letter { background:var(--red); color:#fff; }
+.quiz-explanation { background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.2); border-radius:12px; padding:12px 14px; font-size:0.8rem; color:var(--text); line-height:1.6; margin-bottom:14px; display:none; }
+.quiz-explanation.show { display:block; }
+.quiz-score { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:28px; text-align:center; display:none; }
+.quiz-score.show { display:block; }
+.score-num { font-weight:800; font-size:3rem; background:linear-gradient(120deg,var(--accent),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.score-label { color:var(--muted); font-size:0.78rem; margin-top:4px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ BOTTOM BAR ═══ -->
+<div class="bottom-bar" id="bottom-bar">
+
+  <!-- Row 1: Mode pills (Reference / Flashcards / Quiz) — study screen only -->
+  <div class="mode-bar" id="mode-bar">
+    <button class="mode-pill active" id="pill-ref" onclick="modeSwitch('ref')">
+      <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      Reference
+    </button>
+    <button class="mode-pill" id="pill-flash" onclick="modeSwitch('flash')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+      Flashcards
+    </button>
+    <button class="mode-pill" id="pill-quiz" onclick="modeSwitch('quiz')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>
+      Quiz
+    </button>
+  </div>
+
+  <!-- Row 2: Nav — categories (left) · context title · search (right) -->
+  <div class="nav-row">
+    <button class="nav-btn nav-categories" onclick="goHome()" title="All Categories" aria-label="Categories">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+      </svg>
+    </button>
+    <div class="nav-title" id="nav-title">Med Flash 🍁</div>
+    <button class="nav-btn nav-search" onclick="fabSearch()" title="Search" aria-label="Search">
+      <svg viewBox="0 0 24 24">
+        <circle cx="10.5" cy="10.5" r="6"/>
+        <line x1="15.5" y1="15.5" x2="20.5" y2="20.5"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Row 3: Controls — font style · size · flag -->
+  <div class="controls-strip">
+    <div class="controls-strip-left">
+      <div class="font-toggle" id="font-toggle">
+        <button class="font-btn active" id="font-sf"   onclick="setFont('sf')"   style="font-family:-apple-system,sans-serif" title="San Francisco">SF</button>
+        <button class="font-btn"        id="font-serif" onclick="setFont('serif')" style="font-family:Georgia,serif"            title="Serif">Se</button>
+        <button class="font-btn"        id="font-mono"  onclick="setFont('mono')"  style="font-family:'DM Mono',monospace"      title="Mono">Mo</button>
+      </div>
+      <div class="size-toggle">
+        <button class="size-btn" onclick="adjustSize(-1)" title="Smaller">A−</button>
+        <div class="size-label" id="size-label">16</div>
+        <button class="size-btn" onclick="adjustSize(1)"  title="Larger">A+</button>
+      </div>
+    </div>
+    <div class="controls-strip-right">
+      <div class="flag-toggle">
+        <button class="flag-btn active" id="flag-ca"   onclick="setFlag('ca')"   title="Canadian (mmol/L)">🇨🇦</button>
+        <div class="flag-divider"></div>
+        <button class="flag-btn"        id="flag-both" onclick="setFlag('both')" title="Both">🇨🇦🇺🇸</button>
+        <div class="flag-divider"></div>
+        <button class="flag-btn"        id="flag-us"   onclick="setFlag('us')"   title="US (mg/dL)">🇺🇸</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ iPadOS: APPLE PENCIL HOVER SEARCH BUBBLE ═══ -->
+<div class="pencil-bubble" id="pencil-bubble">
+  <div class="pencil-bubble-inner">
+    <input class="pencil-bubble-input" id="pencil-bubble-input" type="text"
+      placeholder="Search labs…"
+      oninput="handleSearchFrom('pencil')"
+      autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+  </div>
+  <div class="pencil-bubble-hint">Tap to type · Scribble supported</div>
+  <div class="pencil-bubble-results" id="pencil-bubble-results"></div>
+</div>
+
+<!-- ═══ iPadOS: STICKY SEARCH BAR (always visible at top) ═══ -->
+<div class="ipad-search-bar" id="ipad-search-bar">
+  <div class="search-container">
+    <input class="search-input" id="ipad-search-input" type="text"
+      placeholder="Search any lab, abbreviation, keyword…"
+      oninput="handleSearchFrom('ipad')" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="search-results" id="ipad-search-results"></div>
+  </div>
+</div>
+
+<!-- ═══ macOS: HIDDEN SEARCH (slides down on keypress) ═══ -->
+<div class="mac-hidden-search" id="mac-hidden-search">
+  <div class="search-container">
+    <input class="search-input" id="mac-search-input" type="text"
+      placeholder="Search labs…"
+      oninput="handleSearchFrom('mac')" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="search-results" id="mac-search-results"></div>
+  </div>
+</div>
+
+<!-- ═══ iOS: SEARCH OVERLAY ═══ -->
+<div class="ios-search-overlay" id="ios-search-overlay">
+  <div class="ios-overlay-header">
+    <div class="ios-overlay-wrap">
+      <input class="ios-overlay-input" id="ios-search-input" type="search"
+        placeholder="Search labs, values, abbreviations…"
+        oninput="handleSearchFrom('ios')" autocomplete="off" autocorrect="off"
+        autocapitalize="none" spellcheck="false">
+    </div>
+    <button class="ios-cancel-btn" onclick="closeIosOverlay()">Cancel</button>
+  </div>
+  <div class="ios-overlay-results" id="ios-search-results"></div>
+</div>
+
+<!-- ═══ HOME SCREEN ═══ -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <h1>Med Flash 🍁</h1>
+    <p>Canadian Reference Values · Choose a category</p>
+  </div>
+  <!-- macOS hint -->
+  <div class="mac-search-hint">
+    <button onclick="focusSearch()">
+      <span>Search</span>
+      <kbd>/</kbd>
+      <span style="color:var(--muted);font-size:0.7rem">or just start typing</span>
+    </button>
+  </div>
+  <!-- default search bar (shown on non-platform or as fallback) -->
+  <div class="search-wrap">
+    <div class="search-container">
+      <input class="search-input" id="search-input" type="text" placeholder="Search any lab, abbreviation, or keyword…" oninput="handleSearch()" autocomplete="off" autocorrect="off" spellcheck="false">
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </div>
+  <div class="category-grid" id="category-grid"></div>
+</div>
+
+<!-- ═══ STUDY SCREEN ═══ -->
+<div id="screen-study" class="screen">
+
+  <!-- REFERENCE -->
+  <div id="mode-ref" class="mode-panel active">
+    <div class="table-wrap">
+      <table class="ref-table" id="ref-table">
+        <thead><tr><th>Abbreviation / Test</th><th>Normal Range</th></tr></thead>
+        <tbody id="ref-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div id="mode-flash" class="mode-panel">
+    <div class="fc-area">
+      <div class="progress-wrap"><div class="progress-fill" id="fc-progress"></div></div>
+      <div class="fc-counter" id="fc-counter">Card 1 of —</div>
+      <div class="fc-viewport" id="fc-viewport">
+        <div class="fc-track" id="fc-track"></div>
+      </div>
+      <div class="swipe-hint" id="swipe-hint">← swipe · tap to flip →</div>
+      <div class="fc-controls">
+        <button class="fc-btn" onclick="prevCard()">← Prev</button>
+        <button class="fc-btn primary" onclick="shuffleCards()">⇄ Shuffle</button>
+        <button class="fc-btn" onclick="nextCard()">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="mode-quiz" class="mode-panel">
+    <div class="quiz-wrap">
+      <div id="quiz-body"></div>
+      <div class="quiz-score" id="quiz-score">
+        <div class="score-num" id="score-num">—</div>
+        <div class="score-label" id="score-label">—</div>
+        <button class="fc-btn primary" style="margin-top:8px" onclick="startQuiz()">Retake Quiz</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATABASE
+//  card: { abbr, name, q, ca, us }
+//    ca = 🇨🇦 Canadian value(s)
+//    us = 🇺🇸 US value(s)
+//    (null = same as other country / not applicable)
+// ══════════════════════════════════════════════
+
+// Helper: build the green answer HTML shown on card back + reference table
+function fmtAnswer(c) {
+  if (c.ca && c.us) return `🇨🇦 ${c.ca}<br>🇺🇸 ${c.us}`;
+  if (c.ca) return `🇨🇦 ${c.ca}`;
+  if (c.us) return `🇺🇸 ${c.us}`;
+  return '—';
+}
+
+const DB = [
+
+  // ── LIPID PROFILE ──────────────────────────
+  // Source: BRL LifeLabs (Burnaby, BC) — March 2024
+  {
+    id:'lipid', icon:'🫀', name:'Lipid Profile',
+    cards:[
+      { abbr:'TC',        name:'Total Cholesterol',    alt:'Serum Cholesterol · Total Serum Cholesterol',               q:'Normal Total Cholesterol (adult ≥30)?',       ca:'2.00–5.19 mmol/L',           us:'< 200 mg/dL' },
+      { abbr:'LDL-C',     name:'LDL Cholesterol',      alt:'Low-Density Lipoprotein · Bad Cholesterol · LDL',           q:'Normal LDL-C (adult ≥30)?',                  ca:'1.50–3.40 mmol/L',           us:'< 130 mg/dL' },
+      { abbr:'HDL-C',     name:'HDL Cholesterol',      alt:'High-Density Lipoprotein · Good Cholesterol · HDL',         q:'Normal HDL-C (adult ≥18)?',                  ca:'♀ > 1.19  ♂ > 0.99 mmol/L', us:'> 40 mg/dL' },
+      { abbr:'TG',        name:'Triglycerides',         alt:'Triacylglycerol · Serum TG · Trigs · Fasting Lipids',      q:'Normal Triglycerides (adult > 17)?',          ca:'< 2.21 mmol/L',              us:'< 150 mg/dL' },
+      { abbr:'Non-HDL-C', name:'Non-HDL Cholesterol',  alt:'Non-HDL-C · Atherogenic Cholesterol',                      q:'Normal Non-HDL Cholesterol?',                ca:'< 4.0 mmol/L',               us:'< 160 mg/dL' },
+      { abbr:'Lp(a)',     name:'Lipoprotein(a)',        alt:'Lpa · Lp-a · Lipoprotein a · LP little a',                 q:'Normal Lp(a)?',                              ca:'< 100 nmol/L',               us:'< 30 mg/dL' },
+    ],
+    quiz:[
+      { q:'Normal Total Cholesterol for adults ≥30 y (BRL)?', opts:['2.00–4.39 mmol/L','2.00–5.19 mmol/L','< 5.2 mmol/L','2.00–4.59 mmol/L'], ans:1, exp:'BRL: 2.00–5.19 mmol/L for age ≥30. Ages 19–29: 2.00–4.59. Ages ≤18: 2.00–4.39 mmol/L. Sourced from LifeLabs BRL March 2024.' },
+      { q:'Normal Triglycerides for adults >17 y (BRL)?', opts:['< 1.70 mmol/L','< 1.21 mmol/L','< 2.21 mmol/L','< 3.00 mmol/L'], ans:2, exp:'BRL: < 2.21 mmol/L for adults >17. Ages 2–17: < 1.21 mmol/L. BRL upper limit is higher than some guidelines.' },
+      { q:'Normal LDL-C for adults ≥30 y (BRL)?', opts:['1.50–3.00 mmol/L','< 3.50 mmol/L','1.50–3.40 mmol/L','1.60–2.80 mmol/L'], ans:2, exp:'BRL: 1.50–3.40 mmol/L for age ≥30. Ages 18–29: 1.50–3.00. Ages 3–17: 1.60–2.80 mmol/L.' },
+      { q:'Normal HDL-C for adult females ≥18 y (BRL)?', opts:['> 0.99 mmol/L','> 1.09 mmol/L','> 1.19 mmol/L','> 1.30 mmol/L'], ans:2, exp:'BRL: ♀ ≥18 y: > 1.19 mmol/L. ♂ ≥18 y: > 0.99 mmol/L. Ages 3–17 (M/F): > 1.09 mmol/L.' },
+    ]
+  },
+
+  // ── CBC ────────────────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'cbc', icon:'🔬', name:'CBC (Complete Blood Count)',
+    cards:[
+      { abbr:'WBC',   name:'White Blood Cells',      alt:'Leukocytes · WCC · White Cell Count · Leukocyte Count',        q:'Normal WBC (adult ≥19)?',                  ca:'4.0–10.0 × 10⁹/L',                    us:'4,500–11,000 /µL' },
+      { abbr:'RBC',   name:'Red Blood Cells',         alt:'Erythrocytes · Red Cell Count · RCC',                          q:'Normal RBC count (adult ≥19)?',            ca:'♂ 4.20–5.40 · ♀ 3.50–5.00 × 10¹²/L', us:'♂ 4.5–5.9 · ♀ 3.5–5.0 million/µL' },
+      { abbr:'Hgb',   name:'Hemoglobin',              alt:'Haemoglobin · Hb · Blood Hemoglobin',                          q:'Normal Hemoglobin (adult ≥19)?',           ca:'♂ 135–170 g/L · ♀ 115–155 g/L',       us:'♂ 13.5–17.0 g/dL · ♀ 11.5–15.5 g/dL' },
+      { abbr:'Hct',   name:'Hematocrit',              alt:'Haematocrit · Packed Cell Volume · PCV · Crit',                q:'Normal Hematocrit (adult ≥19)?',           ca:'♂ 0.40–0.50 · ♀ 0.35–0.45',           us:'♂ 40–50% · ♀ 35–45%' },
+      { abbr:'MCV',   name:'Mean Corpuscular Volume', alt:'Mean Cell Volume · Red Cell Size',                             q:'Normal MCV (adult ≥19)?',                  ca:'82–98 fL',                             us:'82–98 fL' },
+      { abbr:'MCH',   name:'Mean Corpuscular Hgb',   alt:'Mean Cell Hemoglobin',                                         q:'Normal MCH (adult ≥19)?',                  ca:'27.5–33.5 pg',                         us:'27.5–33.5 pg' },
+      { abbr:'MCHC',  name:'MCHC',                    alt:'Mean Corpuscular Hemoglobin Concentration · Mean Cell Hgb Conc',q:'Normal MCHC (adult ≥19)?',               ca:'300–370 g/L',                          us:'30.0–37.0 g/dL' },
+      { abbr:'Plt',   name:'Platelets',               alt:'Thrombocytes · Platelet Count · PLT Count',                   q:'Normal Platelet count (adult ≥19)?',       ca:'150–400 × 10⁹/L',                     us:'150,000–400,000 /µL' },
+      { abbr:'Neut',  name:'Neutrophils',             alt:'Polymorphonuclear Cells · PMNs · Polys · Segs · Granulocytes', q:'Normal Neutrophil count (adult ≥19)?',     ca:'2.0–7.5 × 10⁹/L',                     us:'1,800–7,500 /µL' },
+      { abbr:'Lymph', name:'Lymphocytes',             alt:'Lymphs · Mononuclear Cells',                                  q:'Normal Lymphocyte count (adult ≥19)?',     ca:'1.0–4.0 × 10⁹/L',                     us:'1,000–4,000 /µL' },
+    ],
+    quiz:[
+      { q:'Normal WBC for adults ≥19 y (BRL)?', opts:['3.9–10.2 × 10⁹/L','4.5–11.0 × 10⁹/L','4.0–10.0 × 10⁹/L','5.3–16.0 × 10⁹/L'], ans:2, exp:'BRL: 4.0–10.0 × 10⁹/L for adults ≥19 y. Leukocytosis >10 suggests infection. Leukopenia <4 seen in viral illness, autoimmune conditions.' },
+      { q:'Normal Hemoglobin in adult male ≥19 y (BRL)?', opts:['131–169 g/L','125–165 g/L','135–170 g/L','140–175 g/L'], ans:2, exp:'BRL: ♂ 135–170 g/L · ♀ 115–155 g/L for adults ≥19 y. WHO anaemia thresholds: ♂ < 130, ♀ < 120 g/L.' },
+      { q:'Normal Platelet count for adults ≥19 y (BRL)?', opts:['165–397 × 10⁹/L','180–440 × 10⁹/L','150–400 × 10⁹/L','200–490 × 10⁹/L'], ans:2, exp:'BRL: 150–400 × 10⁹/L for adults ≥19 y. Thrombocytopenia < 150; thrombocytosis > 400 × 10⁹/L.' },
+      { q:'Normal MCV for adults ≥19 y (BRL)?', opts:['80–95 fL','77–92 fL','82–98 fL','75–87 fL'], ans:2, exp:'BRL: 82–98 fL for adults ≥19 y. Microcytic < 80 → iron deficiency, thalassemia. Macrocytic > 100 → B12/folate deficiency.' },
+    ]
+  },
+
+  // ── RENAL FUNCTION ─────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'renal', icon:'🫘', name:'Renal Function',
+    cards:[
+      { abbr:'Cr',    name:'Creatinine',          alt:'Serum Creatinine · SCr · Creatinine Serum',                     q:'Normal serum Creatinine (adult ≥14)?',       ca:'♂ 45–110 µmol/L · ♀ 45–90 µmol/L',  us:'♂ 0.7–1.2 mg/dL · ♀ 0.5–1.0 mg/dL' },
+      { abbr:'Urea',  name:'Urea',                alt:'BUN · Blood Urea Nitrogen · Blood Urea · Serum Urea · Urea N',  q:'Normal serum Urea?',                         ca:'2.0–9.0 mmol/L',                     us:'6–25 mg/dL' },
+      { abbr:'Na⁺',   name:'Sodium',              alt:'Serum Sodium · Natrium · Na · Plasma Sodium',                   q:'Normal serum Sodium?',                       ca:'135–145 mmol/L',                     us:'135–145 mEq/L' },
+      { abbr:'K⁺',    name:'Potassium',            alt:'Serum Potassium · Kalium · K · Plasma Potassium',              q:'Normal serum Potassium?',                    ca:'3.5–5.0 mmol/L',                     us:'3.5–5.0 mEq/L' },
+      { abbr:'Cl⁻',   name:'Chloride',             alt:'Serum Chloride · Plasma Chloride · Cl',                        q:'Normal serum Chloride?',                     ca:'102–113 mmol/L',                     us:'98–106 mEq/L' },
+      { abbr:'HCO₃⁻', name:'Bicarbonate',          alt:'Bicarb · Total CO₂ · TCO₂ · CO₂ Content · Carbon Dioxide',    q:'Normal serum Bicarbonate (CO₂)?',            ca:'20–30 mmol/L',                       us:'22–29 mEq/L' },
+      { abbr:'Phos',  name:'Phosphate',            alt:'Phosphorus · Inorganic Phosphate · PO₄ · Serum Phosphorus',   q:'Normal serum Phosphate (adult > 1y)?',       ca:'0.80–1.50 mmol/L',                   us:'2.5–4.5 mg/dL' },
+      { abbr:'Mg²⁺',  name:'Magnesium',            alt:'Serum Magnesium · Mg · Plasma Magnesium',                      q:'Normal serum Magnesium?',                    ca:'0.64–0.98 mmol/L',                   us:'1.6–2.3 mg/dL' },
+      { abbr:'Ca²⁺',  name:'Total Calcium',        alt:'Serum Calcium · Plasma Calcium · Total Ca · Calcium',          q:'Normal total serum Calcium?',                ca:'2.10–2.60 mmol/L',                   us:'8.4–10.4 mg/dL' },
+      { abbr:'AG',    name:'Anion Gap',             alt:'Anion Gap serum · AG',                                         q:'Normal Anion Gap?',                          ca:'8–17',                               us:'8–16 mEq/L' },
+    ],
+    quiz:[
+      { q:'Normal serum Creatinine in adult male ≥14 y (BRL)?', opts:['62–106 µmol/L','45–90 µmol/L','45–110 µmol/L','50–120 µmol/L'], ans:2, exp:'BRL: ♂ ≥14 y: 45–110 µmol/L · ♀ ≥14 y: 45–90 µmol/L. Lower than some references, reflecting CKD-EPI standardisation.' },
+      { q:'Normal serum Urea (BRL)?', opts:['2.5–8.0 mmol/L','2.0–9.0 mmol/L','3.0–10.0 mmol/L','1.5–7.5 mmol/L'], ans:1, exp:'BRL: 2.0–9.0 mmol/L. USA equivalent BUN: 6–25 mg/dL. Urea mmol/L × 2.14 ≈ BUN mg/dL.' },
+      { q:'Normal serum Chloride (BRL)?', opts:['98–106 mmol/L','102–113 mmol/L','96–110 mmol/L','100–110 mmol/L'], ans:1, exp:'BRL: 102–113 mmol/L — slightly higher than US refs (98–106 mEq/L). Both are numerically equivalent in mmol/L and mEq/L.' },
+      { q:'Normal Anion Gap (BRL)?', opts:['4–12','8–17','10–20','6–14'], ans:1, exp:'BRL: 8–17. AG = Na − (Cl + HCO₃). Elevated AG >17 → MUDPILES mnemonic. Normal AG acidosis → GI losses, RTA.' },
+    ]
+  },
+
+  // ── LIVER FUNCTION ─────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'liver', icon:'🟤', name:'Liver Function (LFTs)',
+    cards:[
+      { abbr:'ALT',    name:'Alanine Aminotransferase',   alt:'SGPT · Alanine Transaminase · GPT · Serum Glutamic-Pyruvic Transaminase',    q:'Normal ALT (adult ≥1y)?',              ca:'♀ < 36 U/L · ♂ < 50 U/L',          us:'7–56 U/L' },
+      { abbr:'AST',    name:'Aspartate Aminotransferase', alt:'SGOT · Aspartate Transaminase · GOT · Serum Glutamic-Oxaloacetic Transaminase', q:'Normal AST (adult ≥1y)?',            ca:'< 36 U/L',                          us:'10–40 U/L' },
+      { abbr:'ALP',    name:'Alkaline Phosphatase',       alt:'Alk Phos · Alkphos · AP · Alkaline Phosphatase Serum',                        q:'Normal ALP (adult ≥18, female)?',      ca:'♀ 35–120 U/L · ♂ 40–145 U/L',      us:'44–147 U/L' },
+      { abbr:'GGT',    name:'Gamma-Glutamyl Transferase', alt:'Gamma GT · GGT · Gamma-Glutamyltransferase · GGTP',                           q:'Normal GGT?',                          ca:'♀ < 44 U/L · ♂ < 65 U/L',          us:'5–40 U/L' },
+      { abbr:'T.Bili', name:'Total Bilirubin',            alt:'Total Bili · Serum Bilirubin · TBil · Jaundice Marker',                       q:'Normal Total Bilirubin (adult ≥15d)?', ca:'< 17 µmol/L',                       us:'0.2–1.0 mg/dL' },
+      { abbr:'D.Bili', name:'Direct Bilirubin',           alt:'Conjugated Bilirubin · Direct Bili · DBil',                                   q:'Normal Direct Bilirubin (adult >14d)?',ca:'< 8 µmol/L',                        us:'0–0.3 mg/dL' },
+      { abbr:'Alb',    name:'Albumin',                    alt:'Serum Albumin · Plasma Albumin · Albumen',                                    q:'Normal serum Albumin?',                ca:'35–50 g/L',                         us:'3.5–5.0 g/dL' },
+      { abbr:'TP',     name:'Total Protein',              alt:'Serum Total Protein · Plasma Protein · Total Serum Protein',                  q:'Normal Total Protein?',                ca:'60–80 g/L',                         us:'6.0–8.0 g/dL' },
+      { abbr:'Lipase', name:'Lipase',                     alt:'Serum Lipase · Pancreatic Lipase',                                            q:'Normal serum Lipase?',                 ca:'< 75 U/L',                          us:'< 160 U/L' },
+      { abbr:'Amylase',name:'Amylase',                    alt:'Serum Amylase · Pancreatic Amylase',                                          q:'Normal serum Amylase?',                ca:'0–100 U/L',                         us:'30–110 U/L' },
+    ],
+    quiz:[
+      { q:'Normal ALT for adult females (BRL)?', opts:['< 40 U/L','< 36 U/L','< 50 U/L','7–56 U/L'], ans:1, exp:'BRL: ♀ < 36 U/L · ♂ < 50 U/L. Sex-specific limits. ALT is most liver-specific transaminase. ALT > AST suggests viral/non-alcoholic hepatitis.' },
+      { q:'Normal Total Bilirubin for adults ≥15d (BRL)?', opts:['3–21 µmol/L','< 21 µmol/L','< 17 µmol/L','< 20 µmol/L'], ans:2, exp:'BRL: < 17 µmol/L for adults. Jaundice clinically visible at ~34–40 µmol/L. Neonatal ranges: < 172 µmol/L at day 1.' },
+      { q:'Normal GGT for adult males (BRL)?', opts:['< 44 U/L','8–61 U/L','< 65 U/L','5–40 U/L'], ans:2, exp:'BRL: ♂ < 65 U/L · ♀ < 44 U/L. GGT is sensitive for alcohol use, biliary disease, and drug toxicity.' },
+      { q:'Normal serum Lipase (BRL)?', opts:['< 100 U/L','< 60 U/L','< 75 U/L','0–200 U/L'], ans:2, exp:'BRL: < 75 U/L. Lipase > 3× ULN is highly specific for acute pancreatitis. More specific than amylase.' },
+    ]
+  },
+
+  // ── THYROID ────────────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'thyroid', icon:'🦋', name:'Thyroid Function',
+    cards:[
+      { abbr:'TSH',      name:'Thyroid Stimulating Hormone', alt:'Thyrotropin · TSH Level · Thyroid Screen · Thyroid Function Test', q:'Normal TSH (adult 21–50)?',         ca:'0.32–5.04 mU/L',  us:'0.4–4.0 mIU/L' },
+      { abbr:'Free T4',  name:'Free Thyroxine',              alt:'FT4 · Free T4 · Unbound Thyroxine · fT4 · Thyroxine Free',        q:'Normal Free T4 (adult 20–50)?',     ca:'9.0–19.0 pmol/L', us:'0.7–1.8 ng/dL' },
+      { abbr:'Free T3',  name:'Free Triiodothyronine',       alt:'FT3 · Free T3 · Unbound T3 · fT3 · Active Thyroid Hormone',       q:'Normal Free T3 (adult ≥19)?',       ca:'2.6–5.8 pmol/L',  us:'2.3–4.2 pg/mL' },
+      { abbr:'Anti-TPO', name:'Anti-Thyroid Peroxidase',     alt:'TPO Antibody · Anti-TPO Ab · Thyroid Peroxidase Ab · Hashimoto Marker', q:'Normal Anti-TPO?',          ca:'< 35 IU/mL',      us:'< 35 IU/mL' },
+      { abbr:'Anti-TG',  name:'Thyroglobulin Antibody',      alt:'Thyroglobulin Ab · Anti-TG · TG Antibody',                        q:'Normal Thyroglobulin Antibody?',    ca:'< 40 IU/mL',      us:'< 40 IU/mL' },
+    ],
+    quiz:[
+      { q:'Normal TSH for adults 21–50 y (BRL)?', opts:['0.40–4.00 mU/L','0.47–3.41 mU/L','0.32–5.04 mU/L','0.50–4.50 mU/L'], ans:2, exp:'BRL: 0.32–5.04 mU/L for ages 21–50. Wider than ADA/ATA guidelines. Low TSH = hyperthyroid; high TSH = hypothyroid.' },
+      { q:'Normal Free T4 for adults 20–50 y (BRL)?', opts:['11–23 pmol/L','9–23 pmol/L','9.0–19.0 pmol/L','8.5–18 pmol/L'], ans:2, exp:'BRL: 9.0–19.0 pmol/L for adults 20–50 y. Gestational: 1st Tri 9.0–19.0, 2nd Tri 8.7–16.2, 3rd Tri 7.8–14.6 pmol/L.' },
+      { q:'Normal Free T3 for adults ≥19 y (BRL)?', opts:['3.5–6.5 pmol/L','3.6–5.7 pmol/L','2.6–5.8 pmol/L','4.3–6.8 pmol/L'], ans:2, exp:'BRL: 2.6–5.8 pmol/L for adults ≥19 y. T3 is the active hormone. Children 1–11 y: 4.3–6.8 pmol/L.' },
+    ]
+  },
+
+  // ── CARDIAC ENZYMES ────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'cardiac', icon:'❤️', name:'Cardiac Enzymes',
+    cards:[
+      { abbr:'hs-TnI',    name:'Troponin I (hs)',              alt:'hs-TnI · High-Sensitivity Troponin I · Cardiac Troponin I · Trop I', q:'Normal hs-Troponin I (adult)?',       ca:'♀ < 16 ng/L · ♂ < 34 ng/L',   us:'< 16–34 ng/L (lab-specific)' },
+      { abbr:'CK',        name:'Creatine Kinase (total)',      alt:'CPK · Creatine Phosphokinase · Total CK · Muscle Enzyme',           q:'Normal total CK (adult)?',            ca:'♀ < 140 U/L · ♂ < 165 U/L',   us:'♀ < 150 U/L · ♂ < 170 U/L' },
+      { abbr:'NT-proBNP', name:'NT-proBNP',                    alt:'N-terminal proBNP · NT proBNP · proBNP · BNP Heart Failure',        q:'Normal NT-proBNP?',                   ca:'< 125 ng/L',                   us:'< 125 pg/mL' },
+      { abbr:'CRP',       name:'C-Reactive Protein',           alt:'C Reactive Protein · CRP · Inflammatory Marker · Acute Phase',     q:'Normal CRP?',                         ca:'< 5.0 mg/L',                   us:'< 10 mg/L' },
+      { abbr:'ESR',       name:'Erythrocyte Sedimentation Rate',alt:'Sed Rate · ESR · Sedimentation Rate · Westergren',                 q:'Normal ESR?',                         ca:'2–30 mm/hr',                   us:'0–20 mm/hr' },
+    ],
+    quiz:[
+      { q:'Normal hs-Troponin I for adult males 18–100 y (BRL)?', opts:['< 16 ng/L','< 26 ng/L','< 34 ng/L','< 52 ng/L'], ans:2, exp:'BRL: ♂ 18–100 y: < 34 ng/L · ♀ 18–100 y: < 16 ng/L. Sex-specific cutoffs. Ages 1–18 y: < 31 ng/L.' },
+      { q:'Normal NT-proBNP (BRL)?', opts:['< 100 ng/L','< 125 ng/L','< 150 ng/L','< 200 ng/L'], ans:1, exp:'BRL: < 125 ng/L. Values > 125 ng/L warrant evaluation for heart failure. Age-adjusted cutoffs apply when ruling out HF.' },
+      { q:'Normal CRP (BRL)?', opts:['< 3.0 mg/L','< 5.0 mg/L','< 8.0 mg/L','< 10.0 mg/L'], ans:1, exp:'BRL: < 5.0 mg/L. hs-CRP: < 1 = low CV risk, 1–3 = intermediate, > 3 = high risk. CRP > 10 typically indicates acute infection.' },
+    ]
+  },
+
+  // ── BLOOD GLUCOSE ──────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'glucose', icon:'🍬', name:'Blood Glucose & Diabetes',
+    cards:[
+      { abbr:'FPG',   name:'Fasting Plasma Glucose', alt:'Fasting Blood Sugar · FBS · Fasting Blood Glucose · FBG',                   q:'Normal Fasting Glucose (BRL)?',         ca:'3.3–5.5 mmol/L',    us:'60–100 mg/dL' },
+      { abbr:'RBG',   name:'Random Blood Glucose',    alt:'RBS · Random Blood Sugar · Casual Plasma Glucose · Random Glucose',          q:'Normal Random Blood Glucose (BRL)?',    ca:'3.3–11.0 mmol/L',   us:'60–200 mg/dL' },
+      { abbr:'HbA1c', name:'Hemoglobin A1c',          alt:'A1C · Glycated Hemoglobin · Glycosylated Hemoglobin · HgbA1c · Glycohaemoglobin', q:'Normal HbA1c (non-diabetic, BRL)?', ca:'4.5–5.9%',          us:'< 5.7%' },
+      { abbr:'IFG',   name:'Impaired Fasting Glucose',alt:'Pre-diabetes FPG · Borderline Blood Sugar',                                  q:'FPG range for IFG (pre-diabetes)?',     ca:'6.1–6.9 mmol/L',    us:'100–125 mg/dL' },
+      { abbr:'2h-PG', name:'2-hr Post-load Glucose',  alt:'OGTT 2-hour · 2-hour OGTT · Oral Glucose Tolerance Test · Post-load Glucose', q:'Normal 2-hr OGTT glucose?',             ca:'< 7.8 mmol/L',      us:'< 140 mg/dL' },
+    ],
+    quiz:[
+      { q:'Normal fasting glucose (BRL)?', opts:['3.3–6.0 mmol/L','3.3–5.5 mmol/L','4.0–6.0 mmol/L','3.0–6.1 mmol/L'], ans:1, exp:'BRL: 3.3–5.5 mmol/L. Diabetes: ≥ 7.0 mmol/L. IFG (pre-diabetes): 6.1–6.9 mmol/L.' },
+      { q:'Normal HbA1c range (BRL)?', opts:['4.5–5.7%','< 5.7%','4.5–5.9%','< 6.0%'], ans:2, exp:'BRL: 4.5–5.9%. Diabetes: ≥ 6.5%. At-risk/pre-diabetes: 6.0–6.4%. BRL range slightly wider than ADA < 5.7% threshold.' },
+      { q:'Normal random blood glucose (BRL)?', opts:['3.3–7.8 mmol/L','3.9–10.0 mmol/L','3.3–11.0 mmol/L','4.0–8.0 mmol/L'], ans:2, exp:'BRL: 3.3–11.0 mmol/L. Random ≥ 11.1 mmol/L + symptoms = diagnostic for diabetes.' },
+    ]
+  },
+
+  // ── COAGULATION ────────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'coag', icon:'🩸', name:'Coagulation Studies',
+    cards:[
+      { abbr:'INR',     name:'INR',                                  alt:'International Normalized Ratio · Warfarin Monitoring · PT Ratio',  q:'Normal INR (no anticoagulation)?',   ca:'0.8–1.2',             us:'0.8–1.2' },
+      { abbr:'aPTT',    name:'Activated Partial Thromboplastin Time', alt:'PTT · APTT · Heparin Monitoring · Intrinsic Pathway',             q:'Normal aPTT?',                       ca:'27–38 seconds',       us:'25–35 seconds' },
+      { abbr:'Fibg',    name:'Fibrinogen',                            alt:'Serum Fibrinogen · Factor I · Fibrinogen Level · Clotting Factor', q:'Normal Fibrinogen?',                 ca:'2.00–4.10 g/L',       us:'200–400 mg/dL' },
+      { abbr:'D-Dimer', name:'D-Dimer',                               alt:'Fibrin Degradation Product · FDP · DVT Marker · PE Marker',       q:'Normal D-Dimer?',                    ca:'< 500 µg/L FEU',      us:'< 0.5 mg/L FEU' },
+      { abbr:'AT-III',  name:'Antithrombin III',                      alt:'Antithrombin · AT3 · ATIII · Heparin Cofactor',                   q:'Normal Antithrombin III?',           ca:'≥ 0.80 U/mL',         us:'80–130%' },
+    ],
+    quiz:[
+      { q:'Normal aPTT (BRL)?', opts:['25–35 s','22–35 s','27–38 s','30–45 s'], ans:2, exp:'BRL: 27–38 seconds. Slightly different from some US refs (25–35 s) due to reagent variation. Heparin therapy target: typically 60–100 s (1.5–2.5× normal).' },
+      { q:'Normal Fibrinogen (BRL)?', opts:['1.5–3.5 g/L','2.00–4.00 g/L','2.00–4.10 g/L','1.80–3.80 g/L'], ans:2, exp:'BRL: 2.00–4.10 g/L. Low < 1.5 g/L suggests DIC or severe liver disease. Fibrinogen is also an acute-phase reactant.' },
+      { q:'Normal D-Dimer (BRL)?', opts:['< 250 µg/L FEU','< 500 µg/L FEU','< 1000 µg/L FEU','< 0.25 mg/L'], ans:1, exp:'BRL: < 500 µg/L FEU. High sensitivity for DVT/PE when negative. Low specificity — elevated in infection, pregnancy, surgery, malignancy.' },
+    ]
+  },
+
+  // ── VITAL SIGNS ────────────────────────────
+  {
+    id:'vitals', icon:'📊', name:'Vital Signs',
+    cards:[
+      { abbr:'BP',   name:'Blood Pressure',       alt:'Systolic/Diastolic · BP Reading · Arterial Pressure · Sphygmomanometer',  q:'Normal adult Blood Pressure?',          ca:'< 120/80 mmHg',     us:'< 120/80 mmHg' },
+      { abbr:'HR',   name:'Heart Rate',            alt:'Pulse · Pulse Rate · Heart Frequency · Cardiac Rate',                    q:'Normal adult Heart Rate?',              ca:'60–100 bpm',        us:'60–100 bpm' },
+      { abbr:'RR',   name:'Respiratory Rate',      alt:'Breathing Rate · Resp Rate · Breaths Per Minute · Respiratory Frequency', q:'Normal adult Respiratory Rate?',        ca:'12–20 breaths/min', us:'12–20 breaths/min' },
+      { abbr:'Temp', name:'Temperature',           alt:'Body Temp · T° · Core Temperature · Fever Threshold · Afebrile',        q:'Normal body temperature?',              ca:'36.5–37.5 °C',      us:'97.7–99.5 °F' },
+      { abbr:'SpO₂', name:'Oxygen Saturation',     alt:'Pulse Ox · O₂ Sat · Sat · Pulse Oximetry · Peripheral O₂ Saturation',   q:'Normal SpO₂?',                          ca:'95–100%',           us:'95–100%' },
+      { abbr:'GCS',  name:'Glasgow Coma Scale',    alt:'Coma Score · GCS Score · Neurological Score · Consciousness Scale',     q:'Normal GCS in a healthy adult?',        ca:'15/15',             us:'15/15' },
+    ],
+    quiz:[
+      { q:'Normal adult resting heart rate?', opts:['40–60 bpm','60–100 bpm','100–120 bpm','50–70 bpm'], ans:1, exp:'60–100 bpm. Bradycardia < 60; tachycardia > 100 bpm.' },
+      { q:'Normal adult blood pressure?', opts:['< 140/90 mmHg','< 130/85 mmHg','< 120/80 mmHg','< 110/70 mmHg'], ans:2, exp:'< 120/80 mmHg is normal. Stage 1 hypertension: 130–139/80–89. Stage 2: ≥ 140/≥ 90.' },
+      { q:'Normal body temperature?', opts:['35.0–36.5 °C / 95–97.7 °F','36.5–37.5 °C / 97.7–99.5 °F','37.5–38.5 °C / 99.5–101.3 °F','38.0–39.0 °C / 100.4–102.2 °F'], ans:1, exp:'36.5–37.5 °C. Fever ≥ 38.0 °C (100.4 °F).' },
+    ]
+  },
+
+  // ── IRON STUDIES ───────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'iron', icon:'⚙️', name:'Iron Studies',
+    cards:[
+      { abbr:'Fe',     name:'Serum Iron',           alt:'Iron Level · Blood Iron · Serum Fe · Plasma Iron',             q:'Normal serum Iron?',                      ca:'10.6–33.8 µmol/L',                   us:'60–190 µg/dL' },
+      { abbr:'Ferr',   name:'Ferritin',              alt:'Serum Ferritin · Iron Stores · Ferritin Level · Storage Iron', q:'Normal Ferritin (adult > 18)?',           ca:'♀ 15–247 µg/L · ♂ 24–444 µg/L',     us:'♀ 12–150 ng/mL · ♂ 12–300 ng/mL' },
+      { abbr:'Transf', name:'Transferrin',           alt:'TIBC indirect · Serum Transferrin · Iron-Binding Protein',     q:'Normal Transferrin (adult ≥19, female)?', ca:'♀ 2.00–4.00 g/L · ♂ 2.00–3.30 g/L', us:'200–360 mg/dL' },
+      { abbr:'Retic',  name:'Reticulocyte Count',    alt:'Retics · Reticulocyte % · Immature Red Cells · Retic Count',   q:'Normal absolute Reticulocytes (adult ≥19)?', ca:'35–120 × 10⁹/L',                us:'0.5–1.5%' },
+      { abbr:'Hom',    name:'Homocysteine',          alt:'Serum Homocysteine · tHcy · Total Homocysteine',               q:'Normal serum Homocysteine?',              ca:'5.1–15.4 µmol/L',                    us:'5–15 µmol/L' },
+    ],
+    quiz:[
+      { q:'Normal Ferritin for adult males >18 y (BRL)?', opts:['15–247 µg/L','24–336 µg/L','24–444 µg/L','28–186 µg/L'], ans:2, exp:'BRL: ♂ > 18 y: 24–444 µg/L · ♀ > 18 y: 15–247 µg/L. Low ferritin < 15 = iron deficiency. Very high > 500 = inflammation, liver disease, or haemochromatosis.' },
+      { q:'Normal Transferrin for adult females ≥19 y (BRL)?', opts:['2.00–3.30 g/L','2.38–3.66 g/L','2.00–4.00 g/L','1.15–3.52 g/L'], ans:2, exp:'BRL: ♀ ≥19 y: 2.00–4.00 g/L · ♂ ≥19 y: 2.00–3.30 g/L. Transferrin rises in iron deficiency; falls in chronic disease and malnutrition.' },
+      { q:'Normal serum Homocysteine (BRL)?', opts:['3.0–10.0 µmol/L','5.1–15.4 µmol/L','8.0–20.0 µmol/L','2.0–12.0 µmol/L'], ans:1, exp:'BRL: 5.1–15.4 µmol/L. Elevated > 15 associated with B12/folate deficiency and increased cardiovascular and thrombotic risk.' },
+    ]
+  },
+
+  // ── URINALYSIS ─────────────────────────────
+  // Source: BRL LifeLabs — March 2024
+  {
+    id:'urine', icon:'🟡', name:'Urinalysis',
+    cards:[
+      { abbr:'pH',      name:'Urine pH',                   alt:'Urinary pH · Urine Acidity · Urine Alkalinity',                    q:'Normal urine pH?',                      ca:'5.0–8.0',                    us:'5.0–8.0' },
+      { abbr:'SpGr',    name:'Specific Gravity',           alt:'Urine SG · Urine Concentration · SG Urine',                        q:'Normal urine specific gravity?',         ca:'1.001–1.035',                us:'1.001–1.035' },
+      { abbr:'Protein', name:'Urine Protein',              alt:'Proteinuria · Urine Albumin Dipstick · Urine Protein Dipstick',    q:'Normal urine protein (dipstick)?',       ca:'Negative',                   us:'Negative' },
+      { abbr:'Gluc',    name:'Urine Glucose',              alt:'Glucosuria · Glycosuria · Urine Sugar · Glucose in Urine',         q:'Normal urine glucose?',                  ca:'Negative',                   us:'Negative' },
+      { abbr:'WBC',     name:'Urine WBCs',                 alt:'Pyuria · Urine White Cells · Leukocyte Esterase · WBC in Urine',   q:'Normal WBCs in urine (microscopic)?',    ca:'0–5 /HPF',                   us:'0–5 /HPF' },
+      { abbr:'RBC',     name:'Urine RBCs',                 alt:'Hematuria · Blood in Urine · Urine Red Cells · Microscopic Blood', q:'Normal RBCs in urine (microscopic)?',    ca:'0–2 /HPF',                   us:'0–3 /HPF' },
+      { abbr:'ACR',     name:'Albumin:Creatinine Ratio',   alt:'Urine ACR · Microalbuminuria · Albumin Creatinine · A:C Ratio',    q:'Normal urine ACR?',                      ca:'♂ < 2.0 · ♀ < 2.8 mg/mmol', us:'< 30 mg/g' },
+    ],
+    quiz:[
+      { q:'Normal urine pH (BRL)?', opts:['4.5–8.0','5.0–8.0','4.5–7.5','5.0–7.0'], ans:1, exp:'BRL: 5.0–8.0. Alkaline urine (>7.5) can indicate UTI with urease-producing organisms (Proteus, Klebsiella).' },
+      { q:'Normal urine RBCs on microscopy (BRL)?', opts:['0–3 /HPF','0–5 /HPF','0–2 /HPF','< 5 /HPF'], ans:2, exp:'BRL: 0–2 /HPF. Microscopic haematuria > 2 RBCs/HPF warrants investigation for UTI, nephrolithiasis, or malignancy.' },
+      { q:'Normal urine ACR for adult males (BRL)?', opts:['< 2.8 mg/mmol','< 2.0 mg/mmol','< 3.0 mg/mmol','< 30 mg/g'], ans:1, exp:'BRL: ♂ < 2.0 mg/mmol · ♀ < 2.8 mg/mmol. Higher female cutoff reflects lower creatinine excretion. Microalbuminuria = 2.0–20 mg/mmol (early diabetic nephropathy marker).' },
+    ]
+  },
+
+];
+
+// ══════════════════════════════════════════════
+//  APP STATE
+// ══════════════════════════════════════════════
+let activeCat = null;
+let fcIndex = 0;
+let fcOrder = [];
+let swipeMovedX = 0;
+let quizAnswered = [];
+let quizScore = 0;
+
+// ══════════════════════════════════════════════
+//  FUZZY SEARCH ENGINE
+// ══════════════════════════════════════════════
+
+// Alias index: maps every known spelling/abbreviation variant → { catId, cardAbbr }
+// Built once at startup from the DB + a hand-crafted synonym list
+const ALIASES = {
+  // ── Lipid profile ──
+  'tc':'lipid','total cholesterol':'lipid','totalcholesterol':'lipid','cholesterol':'lipid','chol':'lipid','totchol':'lipid',
+  'ldl':'lipid','ldlc':'lipid','ldl-c':'lipid','ldl cholesterol':'lipid','bad cholesterol':'lipid','lowdensity':'lipid','low density lipoprotein':'lipid','lowdensitylipoprotein':'lipid',
+  'hdl':'lipid','hdlc':'lipid','hdl-c':'lipid','hdl cholesterol':'lipid','good cholesterol':'lipid','highdensity':'lipid','high density lipoprotein':'lipid',
+  'tg':'lipid','triglycerides':'lipid','triglyceride':'lipid','trigs':'lipid','tri':'lipid','trigliseride':'lipid','trygliceride':'lipid','tryglicerides':'lipid','triglyserids':'lipid',
+  'non hdl':'lipid','nonhdl':'lipid','non-hdl':'lipid','nonhdlc':'lipid',
+  'vldl':'lipid','vldlc':'lipid','vldl-c':'lipid','very low density':'lipid',
+
+  // ── CBC ──
+  'cbc':'cbc','complete blood count':'cbc','complete blood':'cbc','blood count':'cbc','blud count':'cbc',
+  'wbc':'cbc','white blood cell':'cbc','white blood cells':'cbc','white cells':'cbc','leukocyte':'cbc','leukocytes':'cbc','leucocyte':'cbc','wbcs':'cbc',
+  'rbc':'cbc','red blood cell':'cbc','red blood cells':'cbc','red cells':'cbc','erythrocyte':'cbc','erythrocytes':'cbc',
+  'hgb':'cbc','hb':'cbc','hemoglobin':'cbc','haemoglobin':'cbc','hemo':'cbc','haemo':'cbc','hemoglob':'cbc',
+  'hct':'cbc','hematocrit':'cbc','haematocrit':'cbc','packed cell volume':'cbc','pcv':'cbc',
+  'mcv':'cbc','mean corpuscular volume':'cbc','mean corp vol':'cbc',
+  'mch':'cbc','mean corpuscular hemoglobin':'cbc',
+  'mchc':'cbc','mean corpuscular hemoglobin concentration':'cbc',
+  'plt':'cbc','platelets':'cbc','platelet':'cbc','thrombocytes':'cbc','thrombocyte':'cbc','plts':'cbc','plateltes':'cbc','platlets':'cbc',
+  'neutrophil':'cbc','neutrophils':'cbc','neut':'cbc','neutr':'cbc','polymorphonuclear':'cbc','pmn':'cbc','segs':'cbc',
+  'lymphocyte':'cbc','lymphocytes':'cbc','lymph':'cbc','lymphs':'cbc',
+
+  // ── Renal ──
+  'renal':'renal','kidney':'renal','kidneys':'renal','renal function':'renal','kidney function':'renal',
+  'creatinine':'renal','cr':'renal','creat':'renal','creatin':'renal','creatinin':'renal','kreatinin':'renal',
+  'bun':'renal','urea':'renal','blood urea nitrogen':'renal','blood urea':'renal',
+  'egfr':'renal','gfr':'renal','glomerular filtration':'renal','glomerular filtration rate':'renal',
+  'sodium':'renal','na':'renal','natrium':'renal','sodim':'renal','sodeum':'renal',
+  'potassium':'renal','k':'renal','kalium':'renal','potasium':'renal','potaseum':'renal',
+  'chloride':'renal','cl':'renal','cloride':'renal','chlorid':'renal',
+  'bicarbonate':'renal','bicarb':'renal','hco3':'renal','co2':'renal','tco2':'renal',
+  'phosphate':'renal','phos':'renal','phosphorus':'renal','po4':'renal','phosphat':'renal',
+  'magnesium':'renal','mag':'renal','mg':'renal','magnezium':'renal',
+  'calcium':'renal','ca':'renal','calcuim':'renal','calicum':'renal',
+
+  // ── Liver ──
+  'liver':'liver','lft':'liver','lfts':'liver','liver function':'liver','liver function test':'liver','hepatic':'liver','hepatic panel':'liver',
+  'alt':'liver','alanine aminotransferase':'liver','alanine transaminase':'liver','sgpt':'liver','alat':'liver',
+  'ast':'liver','aspartate aminotransferase':'liver','aspartate transaminase':'liver','sgot':'liver','asat':'liver',
+  'alp':'liver','alkaline phosphatase':'liver','alk phos':'liver','alkphos':'liver','alkphase':'liver',
+  'ggt':'liver','gamma gt':'liver','gamma-gt':'liver','gammaglutamyl':'liver','gamma glutamyl transferase':'liver',
+  'bilirubin':'liver','bili':'liver','tbili':'liver','total bilirubin':'liver','direct bilirubin':'liver','dbili':'liver','billirubin':'liver',
+  'albumin':'liver','alb':'liver','albumen':'liver',
+  'total protein':'liver','tp':'liver','protein':'liver',
+  'pt':'liver','prothrombin time':'liver','pro time':'liver',
+  'inr':'liver','international normalized ratio':'liver',
+
+  // ── Thyroid ──
+  'thyroid':'thyroid','thyroid function':'thyroid','thyroid function test':'thyroid','tft':'thyroid','tfts':'thyroid',
+  'tsh':'thyroid','thyroid stimulating hormone':'thyroid','thyrotropin':'thyroid','tyroid':'thyroid','thirroid':'thyroid',
+  'free t4':'thyroid','ft4':'thyroid','free thyroxine':'thyroid','thyroxine':'thyroid','t4':'thyroid',
+  'free t3':'thyroid','ft3':'thyroid','free triiodothyronine':'thyroid','triiodothyronine':'thyroid','t3':'thyroid',
+  'total t4':'thyroid','total thyroxine':'thyroid',
+  'anti tpo':'thyroid','antitpo':'thyroid','anti-tpo':'thyroid','thyroid peroxidase':'thyroid','tpo':'thyroid','tpo antibody':'thyroid',
+
+  // ── Cardiac ──
+  'cardiac':'cardiac','cardiac enzymes':'cardiac','heart enzymes':'cardiac','cardiac markers':'cardiac','cardiac biomarkers':'cardiac',
+  'troponin':'cardiac','trop':'cardiac','troponin i':'cardiac','troponin t':'cardiac','hs troponin':'cardiac','hs trop':'cardiac','tropinin':'cardiac','troponin':'cardiac',
+  'ck':'cardiac','creatine kinase':'cardiac','creatine phosphokinase':'cardiac','cpk':'cardiac',
+  'ck-mb':'cardiac','ckmb':'cardiac','ck mb':'cardiac',
+  'bnp':'cardiac','brain natriuretic peptide':'cardiac','b natriuretic peptide':'cardiac','bntype':'cardiac',
+  'nt-probnp':'cardiac','ntprobnp':'cardiac','nt probnp':'cardiac','proBNP':'cardiac',
+  'myoglobin':'cardiac','myoglob':'cardiac',
+
+  // ── Glucose ──
+  'glucose':'glucose','blood glucose':'glucose','blood sugar':'glucose','sugar':'glucose','diabetes':'glucose','diabetic':'glucose',
+  'fasting glucose':'glucose','fpg':'glucose','fasting plasma glucose':'glucose','fasting blood sugar':'glucose','fbs':'glucose',
+  'random glucose':'glucose','rbg':'glucose','random blood glucose':'glucose','rbs':'glucose',
+  'hba1c':'glucose','a1c':'glucose','ha1c':'glucose','glycated hemoglobin':'glucose','glycosylated hemoglobin':'glucose','hemoglobin a1c':'glucose','hgba1c':'glucose','ha1':'glucose',
+  'ogtt':'glucose','oral glucose tolerance':'glucose','glucose tolerance':'glucose',
+  'ifg':'glucose','impaired fasting':'glucose','prediabetes':'glucose','pre diabetes':'glucose','pre-diabetes':'glucose',
+  'igt':'glucose','impaired glucose tolerance':'glucose',
+
+  // ── ABG ──
+  'abg':'abg','arterial blood gas':'abg','blood gas':'abg','arterial gas':'abg','blood gases':'abg',
+  'ph':'abg','arterial ph':'abg','acid base':'abg','acidbase':'abg',
+  'paco2':'abg','co2 pressure':'abg','partial pressure co2':'abg','pco2':'abg','carbon dioxide':'abg',
+  'pao2':'abg','o2 pressure':'abg','partial pressure o2':'abg','po2':'abg','oxygen':'abg','oxygen pressure':'abg',
+  'sao2':'abg','o2 sat':'abg','oxygen sat':'abg','oxygen saturation':'abg','o2sat':'abg',
+  'base excess':'abg','be':'abg','base deficit':'abg',
+
+  // ── Coagulation ──
+  'coag':'coag','coagulation':'coag','clotting':'coag','coagulation studies':'coag','coagulation panel':'coag',
+  'pt coag':'coag','prothrombin':'coag',
+  'aptt':'coag','ptt':'coag','partial thromboplastin':'coag','activated ptt':'coag','aPTT':'coag',
+  'thrombin time':'coag','tt coag':'coag',
+  'fibrinogen':'coag','fibrin':'coag','fibriongen':'coag','fibrinigen':'coag',
+  'd-dimer':'coag','ddimer':'coag','d dimer':'coag','fibrin degradation':'coag',
+
+  // ── Vitals ──
+  'vitals':'vitals','vital signs':'vitals','vital':'vitals','obs':'vitals','observations':'vitals',
+  'bp':'vitals','blood pressure':'vitals','systolic':'vitals','diastolic':'vitals','hypertension':'vitals','hypotension':'vitals',
+  'hr':'vitals','heart rate':'vitals','pulse':'vitals','heart':'vitals',
+  'rr':'vitals','respiratory rate':'vitals','breathing rate':'vitals','resp rate':'vitals',
+  'temp':'vitals','temperature':'vitals','fever':'vitals','body temp':'vitals',
+  'spo2':'vitals','o2 saturation':'vitals','pulse ox':'vitals','pulse oximetry':'vitals','sat':'vitals','spO2':'vitals',
+  'gcs':'vitals','glasgow coma scale':'vitals','glasgow':'vitals','coma scale':'vitals',
+
+  // ── Iron ──
+  'iron':'iron','iron studies':'iron','iron panel':'iron','iron profile':'iron',
+  'serum iron':'iron','fe':'iron','ferrum':'iron',
+  'tibc':'iron','total iron binding':'iron','total iron binding capacity':'iron','iron binding':'iron',
+  'ferritin':'iron','ferr':'iron','feratin':'iron','ferittin':'iron','feritin':'iron',
+  'transferrin saturation':'iron','tsat':'iron','sat percent':'iron','iron sat':'iron',
+  'reticulocytes':'iron','retics':'iron','reticulocyte':'iron','reticulocyte count':'iron',
+
+  // ── Urine ──
+  'urine':'urine','urinalysis':'urine','ua':'urine','urine analysis':'urine','uria':'urine',
+  'urine ph':'urine','urinary ph':'urine',
+  'specific gravity':'urine','spgr':'urine','urine sg':'urine','sg':'urine',
+  'urine protein':'urine','proteinuria':'urine','protein in urine':'urine',
+  'urine glucose':'urine','glucosuria':'urine','glycosuria':'urine',
+  'urine wbc':'urine','pyuria':'urine','wbc urine':'urine',
+  'urine rbc':'urine','hematuria':'urine','rbc urine':'urine',
+  'acr':'urine','albumin creatinine ratio':'urine','albumin creatinine':'urine','microalbuminuria':'urine',
+};
+
+// ══════════════════════════════════════════════
+//  CARD-LEVEL ALIAS MAP
+//  Maps normalised strings directly to {catId, cardAbbr}
+//  These override the broad category ALIASES for precise card matching
+// ══════════════════════════════════════════════
+const CARD_ALIASES = {
+  // Lipid Profile
+  'tc':'TC','total cholesterol':'TC','chol':'TC','cholesterol':'TC','totchol':'TC',
+  'ldl':'LDL-C','ldlc':'LDL-C','ldl c':'LDL-C','low density lipoprotein':'LDL-C','bad cholesterol':'LDL-C',
+  'hdl':'HDL-C','hdlc':'HDL-C','hdl c':'HDL-C','high density lipoprotein':'HDL-C','good cholesterol':'HDL-C',
+  'tg':'TG','triglycerides':'TG','triglyceride':'TG','trigs':'TG','tri':'TG',
+  'non hdl':'Non-HDL-C','nonhdl':'Non-HDL-C','non hdl c':'Non-HDL-C',
+  'vldl':'VLDL-C','vldlc':'VLDL-C','very low density':'VLDL-C',
+
+  // CBC
+  'wbc':'WBC','white blood cell':'WBC','white blood cells':'WBC','leukocyte':'WBC','leucocyte':'WBC',
+  'rbc':'RBC','red blood cell':'RBC','red blood cells':'RBC','erythrocyte':'RBC',
+  'hgb':'Hgb','hb':'Hgb','hemoglobin':'Hgb','haemoglobin':'Hgb',
+  'hct':'Hct','hematocrit':'Hct','haematocrit':'Hct','pcv':'Hct','packed cell volume':'Hct',
+  'mcv':'MCV','mean corpuscular volume':'MCV',
+  'mch':'MCH','mean corpuscular hemoglobin':'MCH',
+  'mchc':'MCHC',
+  'plt':'Plt','platelets':'Plt','platelet':'Plt','thrombocyte':'Plt',
+  'neutrophil':'Neut','neutrophils':'Neut','neut':'Neut','pmn':'Neut','segs':'Neut',
+  'lymphocyte':'Lymph','lymphocytes':'Lymph','lymph':'Lymph','lymphs':'Lymph',
+
+  // Renal
+  'creatinine':'Cr','cr':'Cr','creat':'Cr','serum creatinine':'Cr',
+  'bun':'BUN','urea':'BUN','blood urea nitrogen':'BUN',
+  'egfr':'eGFR','gfr':'eGFR','glomerular filtration rate':'eGFR',
+  'sodium':'Na⁺','na':'Na⁺','natrium':'Na⁺','serum sodium':'Na⁺',
+  'potassium':'K⁺','k':'K⁺','kalium':'K⁺','serum potassium':'K⁺',
+  'chloride':'Cl⁻','cl':'Cl⁻','serum chloride':'Cl⁻',
+  'bicarbonate':'HCO₃⁻','bicarb':'HCO₃⁻','hco3':'HCO₃⁻','tco2':'HCO₃⁻',
+  'phosphate':'Phos','phos':'Phos','phosphorus':'Phos','po4':'Phos',
+  'magnesium':'Mg²⁺','mag':'Mg²⁺','mg':'Mg²⁺','serum magnesium':'Mg²⁺',
+  'calcium':'Ca²⁺','ca':'Ca²⁺','serum calcium':'Ca²⁺','total calcium':'Ca²⁺',
+
+  // Liver
+  'alt':'ALT','alanine aminotransferase':'ALT','sgpt':'ALT','alat':'ALT',
+  'ast':'AST','aspartate aminotransferase':'AST','sgot':'AST','asat':'AST',
+  'alp':'ALP','alkaline phosphatase':'ALP','alk phos':'ALP','alkphos':'ALP',
+  'ggt':'GGT','gamma gt':'GGT','gamma glutamyl transferase':'GGT',
+  'bilirubin':'T.Bili','total bilirubin':'T.Bili','bili':'T.Bili','tbili':'T.Bili',
+  'direct bilirubin':'D.Bili','dbili':'D.Bili','conjugated bilirubin':'D.Bili',
+  'albumin':'Alb','alb':'Alb','albumen':'Alb','serum albumin':'Alb',
+  'total protein':'TP','tp':'TP',
+  'prothrombin time':'PT','pro time':'PT',
+  'inr':'INR','international normalized ratio':'INR',
+
+  // Thyroid
+  'tsh':'TSH','thyroid stimulating hormone':'TSH','thyrotropin':'TSH',
+  'free t4':'Free T4','ft4':'Free T4','free thyroxine':'Free T4',
+  'free t3':'Free T3','ft3':'Free T3','free triiodothyronine':'Free T3',
+  'total t4':'Total T4','total thyroxine':'Total T4',
+  'anti tpo':'Anti-TPO','antitpo':'Anti-TPO','tpo':'Anti-TPO','thyroid peroxidase':'Anti-TPO',
+
+  // Cardiac
+  'troponin i':'Trop I','trop i':'Trop I','hs troponin i':'Trop I',
+  'troponin t':'Trop T','trop t':'Trop T','hs troponin t':'Trop T','hs trop':'Trop T',
+  'troponin':'Trop I','trop':'Trop I',
+  'ck':'CK','creatine kinase':'CK','cpk':'CK','creatine phosphokinase':'CK',
+  'ckmb':'CK-MB','ck mb':'CK-MB','ck-mb':'CK-MB',
+  'bnp':'BNP','brain natriuretic peptide':'BNP',
+  'nt probnp':'NT-proBNP','ntprobnp':'NT-proBNP','nt-probnp':'NT-proBNP','probnp':'NT-proBNP',
+  'myoglobin':'Myoglobin','myoglob':'Myoglobin',
+
+  // Glucose
+  'fasting glucose':'FPG','fpg':'FPG','fasting plasma glucose':'FPG','fasting blood sugar':'FPG','fbs':'FPG',
+  'random glucose':'RBG','rbg':'RBG','random blood glucose':'RBG','rbs':'RBG',
+  'hba1c':'HbA1c','a1c':'HbA1c','glycated hemoglobin':'HbA1c','hemoglobin a1c':'HbA1c',
+  'ifg':'IFG','impaired fasting glucose':'IFG','impaired fasting':'IFG',
+  'igt':'IGT','impaired glucose tolerance':'IGT',
+  'ogtt':'2h-PG','oral glucose tolerance':'2h-PG',
+
+  // ABG
+  'ph':'pH','arterial ph':'pH','blood ph':'pH',
+  'paco2':'PaCO₂','pco2':'PaCO₂','carbon dioxide pressure':'PaCO₂',
+  'pao2':'PaO₂','po2':'PaO₂','oxygen pressure':'PaO₂','partial pressure oxygen':'PaO₂',
+  'sao2':'SaO₂','o2 sat':'SaO₂','oxygen saturation abg':'SaO₂',
+  'base excess':'BE','base deficit':'BE',
+
+  // Coagulation
+  'pt':'PT','prothrombin time coag':'PT',
+  'aptt':'aPTT','ptt':'aPTT','partial thromboplastin time':'aPTT',
+  'thrombin time':'TT','tt':'TT',
+  'fibrinogen':'Fibg','fibrin':'Fibg',
+  'd dimer':'D-Dimer','ddimer':'D-Dimer','d-dimer':'D-Dimer',
+
+  // Vitals
+  'blood pressure':'BP','bp':'BP','systolic':'BP','diastolic':'BP',
+  'heart rate':'HR','hr':'HR','pulse':'HR',
+  'respiratory rate':'RR','rr':'RR','resp rate':'RR','breathing rate':'RR',
+  'temperature':'Temp','temp':'Temp','fever':'Temp','body temperature':'Temp',
+  'spo2':'SpO₂','oxygen saturation':'SpO₂','pulse ox':'SpO₂',
+  'gcs':'GCS','glasgow coma scale':'GCS','glasgow':'GCS',
+
+  // Iron
+  'serum iron':'Fe','iron':'Fe','ferrum':'Fe',
+  'tibc':'TIBC','total iron binding capacity':'TIBC','iron binding capacity':'TIBC',
+  'ferritin':'Ferr','ferr':'Ferr',
+  'transferrin saturation':'Sat%','tsat':'Sat%','iron saturation':'Sat%',
+  'reticulocytes':'Reticulocytes','retics':'Reticulocytes','reticulocyte count':'Reticulocytes',
+
+  // Urine
+  'urine ph':'pH','urinary ph':'pH',
+  'specific gravity':'SpGr','spgr':'SpGr','urine sg':'SpGr',
+  'urine protein':'Protein','proteinuria':'Protein',
+  'urine glucose':'Gluc','glucosuria':'Gluc','glycosuria':'Gluc',
+  'urine wbc':'WBC','pyuria':'WBC',
+  'urine rbc':'RBC','hematuria':'RBC',
+  'acr':'ACR','albumin creatinine ratio':'ACR','albumin creatinine':'ACR','microalbuminuria':'ACR',
+};
+
+// Levenshtein distance
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_,i) => Array.from({length: n+1}, (_,j) => i===0?j:j===0?i:0));
+  for (let i=1; i<=m; i++)
+    for (let j=1; j<=n; j++)
+      dp[i][j] = a[i-1]===b[j-1] ? dp[i-1][j-1] : 1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+function norm(s) { return s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+
+// ── Tiered scorer ──────────────────────────────
+// Returns { score, tier }
+// tier 1 = card-specific match (abbr/name/card alias)
+// tier 2 = category-level match
+// Lower score = better
+function scoreCard(q, card, cat) {
+  const qn = norm(q);
+  const abbrN  = norm(card.abbr);
+  const nameN  = norm(card.name);
+  const altTerms = card.alt ? card.alt.split(' · ').map(a => norm(a)) : [];
+
+  // Tier 1a — exact abbreviation
+  if (abbrN === qn) return { score: 0, tier: 1 };
+  // Tier 1b — abbreviation starts with query
+  if (abbrN.startsWith(qn)) return { score: 1, tier: 1 };
+  // Tier 1c — exact full name
+  if (nameN === qn) return { score: 2, tier: 1 };
+  // Tier 1d — name starts with query
+  if (nameN.startsWith(qn)) return { score: 3, tier: 1 };
+  // Tier 1e — query is contained in name
+  if (nameN.includes(qn)) return { score: 4, tier: 1 };
+  // Tier 1f — card-level alias exact match
+  const cardAlias = CARD_ALIASES[qn];
+  if (cardAlias && norm(cardAlias) === abbrN) return { score: 5, tier: 1 };
+  // Tier 1g — alt name exact or prefix match
+  for (const alt of altTerms) {
+    if (alt === qn) return { score: 5, tier: 1 };
+    if (alt.startsWith(qn)) return { score: 6, tier: 1 };
+    if (alt.includes(qn)) return { score: 6, tier: 1 };
+  }
+  // Tier 1h — fuzzy match on abbreviation (1 typo)
+  if (levenshtein(qn, abbrN) === 1) return { score: 7, tier: 1 };
+  // Tier 1i — fuzzy match on name words
+  const qWords = qn.split(' ');
+  const nameWords = nameN.split(' ');
+  const allClose = qWords.every(qw =>
+    nameWords.some(nw => nw === qw || nw.startsWith(qw) || levenshtein(qw, nw) <= 1)
+  );
+  if (allClose) return { score: 8, tier: 1 };
+  // Tier 1j — fuzzy match on alt terms
+  for (const alt of altTerms) {
+    const altWords = alt.split(' ');
+    const altClose = qWords.every(qw =>
+      altWords.some(aw => aw === qw || aw.startsWith(qw) || levenshtein(qw, aw) <= 1)
+    );
+    if (altClose) return { score: 9, tier: 1 };
+  }
+  // Tier 1k — fuzzy full name
+  const dist = levenshtein(qn, nameN);
+  const ratio = dist / Math.max(qn.length, nameN.length);
+  if (dist <= 2 && ratio < 0.4) return { score: 9, tier: 1 };
+
+  // Tier 2 — category-level alias fallback
+  const catAliasMatch = ALIASES[qn] === cat.id;
+  if (catAliasMatch) return { score: 20, tier: 2 };
+  const catAliasKeys = Object.keys(ALIASES).filter(k => ALIASES[k] === cat.id);
+  for (const ak of catAliasKeys) {
+    if (ak === qn || ak.startsWith(qn)) return { score: 25, tier: 2 };
+    if (levenshtein(qn, ak) <= 1) return { score: 28, tier: 2 };
+  }
+
+  return { score: 999, tier: 3 };
+}
+
+function scoreCat(q, cat) {
+  const qn = norm(q);
+  const nameN = norm(cat.name);
+  if (nameN === qn) return 0;
+  if (nameN.startsWith(qn)) return 1;
+  if (nameN.includes(qn)) return 2;
+  if (ALIASES[qn] === cat.id) return 3;
+  const catAliasKeys = Object.keys(ALIASES).filter(k => ALIASES[k] === cat.id);
+  for (const ak of catAliasKeys) {
+    if (ak === qn || ak.startsWith(qn)) return 4;
+  }
+  if (levenshtein(qn, nameN) <= 2) return 5;
+  return 999;
+}
+
+// Build search index
+function buildSearchIndex() {
+  const items = [];
+  DB.forEach(cat => {
+    items.push({ type:'cat', cat });
+    cat.cards.forEach((card, cardIdx) => {
+      items.push({ type:'card', cat, card, cardIdx });
+    });
+  });
+  return items;
+}
+
+// ══════════════════════════════════════════════
+//  FLAG MODE  ('ca' | 'us' | 'both')
+// ══════════════════════════════════════════════
+let flagMode = 'both';
+
+function setFlag(mode) {
+  flagMode = mode;
+  ['ca','both','us'].forEach(m => {
+    document.getElementById('flag-'+m).classList.toggle('active', m === mode);
+  });
+  // Rebuild whatever is currently visible
+  if (activeCat) {
+    buildRefTable();
+    buildTrack();
+    // re-render search results value snippets if open
+    if (document.getElementById('search-results').classList.contains('open')) {
+      handleSearch();
+    }
+  }
+}
+
+function getValHtml(card, lineBreak = true) {
+  const ca = card.ca || '';
+  const us = card.us || '';
+  // Normalize for comparison: strip spaces, symbols
+  const norm = s => s.replace(/\s+/g,'').toLowerCase();
+  const same = ca && us && norm(ca) === norm(us);
+
+  if (flagMode === 'ca') return ca ? `🇨🇦 ${ca}` : (us ? `🇺🇸 ${us}` : '');
+  if (flagMode === 'us') return us ? `🇺🇸 ${us}` : (ca ? `🇨🇦 ${ca}` : '');
+
+  // Both mode
+  if (!ca && !us) return '';
+  if (!ca) return `🇺🇸 ${us}`;
+  if (!us) return `🇨🇦 ${ca}`;
+  if (same) return `🇨🇦 ${ca}<br><span style="color:var(--muted);font-size:0.85em">🇺🇸 Same</span>`;
+  const sep = lineBreak ? '<br>' : '  ';
+  return `🇨🇦 ${ca}${sep}🇺🇸 ${us}`;
+}
+
+function getValText(card) {
+  const ca = card.ca || '';
+  const us = card.us || '';
+  if (flagMode === 'ca') return ca || us;
+  if (flagMode === 'us') return us || ca;
+  return ca && us ? `${ca} / ${us}` : ca || us;
+}
+
+// ══════════════════════════════════════════════
+//  KEYBOARD NAVIGATION STATE
+// ══════════════════════════════════════════════
+let kbIndex = -1;         // -1 = nothing focused
+let currentResults = [];  // flat list of result items in order
+
+function getResultItems() {
+  return Array.from(document.querySelectorAll('#search-results .sr-item'));
+}
+
+function updateKbFocus(items, newIdx) {
+  items.forEach(el => el.classList.remove('kb-focus'));
+  if (newIdx >= 0 && newIdx < items.length) {
+    items[newIdx].classList.add('kb-focus');
+    items[newIdx].scrollIntoView({ block: 'nearest' });
+  }
+  kbIndex = newIdx;
+}
+
+// ══════════════════════════════════════════════
+//  FONT SYSTEM
+// ══════════════════════════════════════════════
+let currentFont = 'sf';
+let currentFontSize = 16; // px, applied to html root so rem scales globally
+const FONT_SIZE_MIN = 12;
+const FONT_SIZE_MAX = 22;
+
+function setFont(f) {
+  currentFont = f;
+  document.body.classList.remove('font-sf','font-serif','font-mono');
+  document.body.classList.add('font-' + f);
+  ['sf','serif','mono'].forEach(id => {
+    document.getElementById('font-' + id).classList.toggle('active', id === f);
+  });
+}
+
+function adjustSize(delta) {
+  currentFontSize = Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, currentFontSize + delta));
+  document.documentElement.style.setProperty('--base-font-size', currentFontSize + 'px');
+  document.documentElement.style.fontSize = currentFontSize + 'px';
+  document.getElementById('size-label').textContent = currentFontSize;
+}
+
+// Apply defaults on load
+setFont('sf');
+adjustSize(0); // sets label to 16
+
+// ══════════════════════════════════════════════
+//  NAVIGATION HISTORY  (for [ and ] keys)
+// ══════════════════════════════════════════════
+// States: 'home' | 'study-ref' | 'study-flash' | 'study-quiz'
+const navHistory = ['home'];
+let navPos = 0;
+
+function navPush(state) {
+  // Trim forward history when navigating to a new state
+  navHistory.splice(navPos + 1);
+  navHistory.push(state);
+  navPos = navHistory.length - 1;
+}
+
+function navBack() {
+  if (navPos <= 0) return;
+  navPos--;
+  applyNavState(navHistory[navPos]);
+}
+
+function navForward() {
+  if (navPos >= navHistory.length - 1) return;
+  navPos++;
+  applyNavState(navHistory[navPos]);
+}
+
+function applyNavState(state) {
+  if (state === 'home') {
+    document.getElementById('screen-home').classList.add('active');
+    document.getElementById('screen-study').classList.remove('active');
+    renderHome(''); hideModeBar();
+  } else if (state === 'study-ref') {
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-study').classList.add('active');
+    if (activeCat) { showMode('ref', null); buildRefTable(); showModeBar('ref'); }
+  } else if (state === 'study-flash') {
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-study').classList.add('active');
+    if (activeCat) { showMode('flash', null); buildTrack(); showModeBar('flash'); }
+  } else if (state === 'study-quiz') {
+    document.getElementById('screen-home').classList.remove('active');
+    document.getElementById('screen-study').classList.add('active');
+    if (activeCat) { showMode('quiz', null); startQuiz(); showModeBar('quiz'); }
+  }
+}
+
+// ══════════════════════════════════════════════
+//  VALUE MATCH CSS (injected)
+// ══════════════════════════════════════════════
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `
+    .val-match { background: rgba(74,222,128,0.22); color: var(--green);
+                 border-radius: 3px; padding: 0 2px; font-weight: 700; }
+    .sr-section-label.value-section { color: var(--green); }
+    .sr-item.value-hit .sr-item-val { font-size: 0.7rem; line-height: 1.4; }
+  `;
+  document.head.appendChild(s);
+})();
+
+// ── Detect numeric / value query ──────────────
+function isValueQuery(raw) {
+  return /[\d]/.test(raw) || /^[<>≥≤~]/.test(raw.trim());
+}
+
+// ── Score a card's value text against a numeric query ──
+function scoreValueMatch(raw, card) {
+  const q = raw.trim().toLowerCase();
+  const digitsOnly = q.replace(/[^0-9.]/g, '');
+  if (!digitsOnly) return { matched: false };
+  const caText = (card.ca || '').toLowerCase();
+  const usText = (card.us || '').toLowerCase();
+  const caHit = caText.includes(digitsOnly) || caText.replace(/[^0-9.]/g,'').includes(digitsOnly);
+  const usHit = usText.includes(digitsOnly) || usText.replace(/[^0-9.]/g,'').includes(digitsOnly);
+  if (!caHit && !usHit) return { matched: false };
+  function highlight(text, digits) {
+    if (!text) return '';
+    const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const re = new RegExp(digits.replace(/\./g,'\\.'), 'g');
+    return escaped.replace(re, m => `<span class="val-match">${m}</span>`);
+  }
+  const highlightedCa = caHit && card.ca ? highlight(card.ca.split('\n')[0], digitsOnly) : (card.ca ? card.ca.split('\n')[0] : '');
+  const highlightedUs = usHit && card.us ? highlight(card.us.split('\n')[0], digitsOnly) : (card.us ? card.us.split('\n')[0] : '');
+  const score = (caText.includes(digitsOnly) || usText.includes(digitsOnly)) ? 0 : 1;
+  return { matched: true, caHit, usHit, highlightedCa, highlightedUs, score };
+}
+
+let searchIndex = null;
+
+// focusSearch — for default (non-platform) only
+function focusSearch(seedChar) {
+  const input = document.getElementById('search-input');
+  const homeScreen = document.getElementById('screen-home');
+  const studyScreen = document.getElementById('screen-study');
+  if (!homeScreen.classList.contains('active')) {
+    homeScreen.classList.add('active');
+    studyScreen.classList.remove('active');
+    renderHome('');
+  }
+  input.focus();
+  if (seedChar) { input.value = seedChar; handleSearch(); }
+  else { input.select(); input.style.borderColor='var(--accent2)'; setTimeout(()=>{input.style.borderColor='';},600); }
+}
+
+// Open a specific category AND highlight a specific card/row
+function openToCard(catId, cardIdx) {
+  const cat = DB.find(c => c.id === catId);
+  if (!cat) return;
+  closeAllSearch();
+  kbIndex = -1;
+  activeCat = cat;
+  fcIndex = cardIdx >= 0 ? cardIdx : 0;
+  fcOrder = [...Array(cat.cards.length).keys()];
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-study').classList.add('active');
+  showMode('ref', null);
+  buildRefTable(cardIdx);
+  buildTrack();
+  showModeBar('ref');
+  navPush('study-ref');
+}
+
+// Close all search UIs when clicking outside
+document.addEventListener('click', e => {
+  const inSearch = e.target.closest('.search-container') ||
+                   e.target.closest('.ios-search-overlay') ||
+                   e.target.closest('.mac-hidden-search') ||
+                   e.target.closest('.fab-search');
+  if (!inSearch) {
+    document.querySelectorAll('.search-results').forEach(r => r.classList.remove('open'));
+  }
+});
+
+// ── FAB: platform-aware search trigger ────────
+function fabSearch() {
+  if (document.body.classList.contains('platform-ios')) {
+    openIosOverlay();
+  } else if (document.body.classList.contains('platform-ipados')) {
+    const input = document.getElementById('ipad-search-input');
+    if (input) { input.focus(); input.select(); }
+  } else if (document.body.classList.contains('platform-macos')) {
+    openMacSearch();
+  } else {
+    focusSearch();
+  }
+}
+
+// Helper: close all search UIs
+function closeAllSearch() {
+  closeIosOverlay();
+  document.querySelectorAll('.search-results').forEach(r => r.classList.remove('open'));
+  document.querySelectorAll('.search-input').forEach(i => i.value = '');
+  if (typeof closeMacSearch === 'function' && macSearchOpen) closeMacSearch();
+}
+
+function renderHome(highlightQuery) {
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = '';
+  DB.forEach((cat, i) => {
+    const div = document.createElement('div');
+    div.className = 'cat-card';
+    div.style.animationDelay = `${i * 0.04}s`;
+    div.innerHTML = `<div class="cat-icon">${cat.icon}</div><div class="cat-name">${cat.name}</div><div class="cat-count">${cat.cards.length} cards</div>`;
+    div.onclick = () => { closeAllSearch(); openCategory(cat); };
+    grid.appendChild(div);
+  });
+}
+
+function goHome() {
+  document.getElementById('screen-home').classList.add('active');
+  document.getElementById('screen-study').classList.remove('active');
+  closeAllSearch();
+  renderHome('');
+  hideModeBar();
+  navPush('home');
+}
+
+// ── OPEN CATEGORY ─────────────────────────────
+function openCategory(cat) {
+  activeCat = cat;
+  fcIndex = 0;
+  fcOrder = [...Array(cat.cards.length).keys()];
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-study').classList.add('active');
+  showMode('ref', null);
+  buildRefTable();
+  buildTrack();
+  showModeBar('ref');
+  navPush('study-ref');
+}
+
+// ── MODE BAR ──────────────────────────────────
+function showModeBar(activeId) {
+  const bar = document.getElementById('mode-bar');
+  if (bar) {
+    bar.classList.add('visible');
+    ['ref','flash','quiz'].forEach(id => {
+      const pill = document.getElementById('pill-' + id);
+      if (pill) pill.classList.toggle('active', id === activeId);
+    });
+  }
+  // Update nav title to show current category
+  const navTitle = document.getElementById('nav-title');
+  if (navTitle && activeCat) navTitle.textContent = activeCat.icon + ' ' + activeCat.name;
+}
+function hideModeBar() {
+  const bar = document.getElementById('mode-bar');
+  if (bar) bar.classList.remove('visible');
+  // Reset nav title to app name on home
+  const navTitle = document.getElementById('nav-title');
+  if (navTitle) navTitle.textContent = 'Med Flash 🍁';
+}
+
+// modeSwitch — called by the mode bar pills
+function modeSwitch(id) {
+  if (!activeCat) return;
+  document.getElementById('screen-home').classList.remove('active');
+  document.getElementById('screen-study').classList.add('active');
+  showMode(id, null);
+  showModeBar(id);
+}
+
+// ── MODE PANELS ───────────────────────────────
+function showMode(id, btn) {
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('mode-' + id).classList.add('active');
+  if (id === 'quiz') startQuiz();
+  if (id === 'flash') buildTrack();
+  if (id === 'ref') buildRefTable();
+  showModeBar(id);
+  navPush('study-' + id);
+}
+
+// ── REFERENCE TABLE ───────────────────────────
+function buildRefTable(highlightIdx = -1) {
+  const tbody = document.getElementById('ref-body');
+  tbody.innerHTML = '';
+  activeCat.cards.forEach((c, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = idx;
+    if (idx === highlightIdx) tr.classList.add('ref-row-highlight');
+    const altHtml = c.alt ? `<div class="ref-alt">also: ${c.alt}</div>` : '';
+    tr.innerHTML = `
+      <td><div class="ref-abbr">${c.abbr}</div><div class="ref-name">${c.name}</div>${altHtml}</td>
+      <td class="ref-val">${getValHtml(c, true)}</td>`;
+    tbody.appendChild(tr);
+  });
+  if (highlightIdx >= 0) {
+    setTimeout(() => {
+      const row = tbody.querySelector(`tr[data-idx="${highlightIdx}"]`);
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  }
+}
+
+// ── FLASHCARD TRACK ───────────────────────────
+function buildTrack() {
+  const track = document.getElementById('fc-track');
+  track.innerHTML = '';
+  fcOrder.forEach((cardIdx, i) => {
+    const c = activeCat.cards[cardIdx];
+    const altHtml = c.alt
+      ? `<div class="card-hint" style="margin-top:6px;font-size:0.65rem;opacity:0.65">${c.alt.split(' · ')[0]}</div>`
+      : '';
+    const slide = document.createElement('div');
+    slide.className = 'fc-slide';
+    slide.innerHTML = `
+      <div class="flipper" id="flipper-${i}">
+        <div class="card-face card-front">
+          <div class="card-abbr">${c.abbr}</div>
+          <div class="card-question">${c.q}</div>
+          ${altHtml}
+          <div class="card-hint">Tap to reveal normal value</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-answer">${getValHtml(c, true)}</div>
+        </div>
+      </div>`;
+    track.appendChild(slide);
+  });
+  positionTrack(false);
+  document.getElementById('swipe-hint').classList.remove('hidden');
+}
+
+function positionTrack(animate) {
+  const track = document.getElementById('fc-track');
+  track.style.transition = animate ? 'transform 0.35s cubic-bezier(0.4,0,0.2,1)' : 'none';
+  track.style.transform = `translateX(-${fcIndex * 100}%)`;
+  const flipper = document.getElementById(`flipper-${fcIndex}`);
+  if (flipper) flipper.classList.remove('flipped');
+  const total = activeCat ? activeCat.cards.length : 1;
+  document.getElementById('fc-progress').style.width = `${((fcIndex + 1) / total) * 100}%`;
+  document.getElementById('fc-counter').textContent = `Card ${fcIndex + 1} of ${total}`;
+}
+
+function nextCard() { if (fcIndex < activeCat.cards.length - 1) { fcIndex++; positionTrack(true); } }
+function prevCard() { if (fcIndex > 0) { fcIndex--; positionTrack(true); } }
+function shuffleCards() {
+  for (let i = fcOrder.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fcOrder[i], fcOrder[j]] = [fcOrder[j], fcOrder[i]];
+  }
+  fcIndex = 0; buildTrack();
+}
+
+// ── SWIPE ─────────────────────────────────────
+function initSwipe() {
+  const viewport = document.getElementById('fc-viewport');
+  let startX = 0, startY = 0, isDragging = false, isHorizontal = null;
+  swipeMovedX = 0;
+
+  function onStart(x, y) {
+    startX = x; startY = y; isDragging = true; swipeMovedX = 0; isHorizontal = null;
+    const track = document.getElementById('fc-track');
+    if (track) track.style.transition = 'none';
+  }
+  function onMove(x, y) {
+    if (!isDragging) return;
+    const dx = x - startX, dy = y - startY;
+    if (isHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5))
+      isHorizontal = Math.abs(dx) > Math.abs(dy);
+    if (!isHorizontal) return;
+    swipeMovedX = dx;
+    const track = document.getElementById('fc-track');
+    if (track) track.style.transform = `translateX(calc(-${fcIndex * 100}% + ${swipeMovedX}px))`;
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    if (!isHorizontal || !activeCat) return;
+    const threshold = viewport.offsetWidth * 0.25;
+    if (swipeMovedX < -threshold && fcIndex < activeCat.cards.length - 1) fcIndex++;
+    else if (swipeMovedX > threshold && fcIndex > 0) fcIndex--;
+    positionTrack(true);
+    document.getElementById('swipe-hint').classList.add('hidden');
+  }
+
+  viewport.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  viewport.addEventListener('touchmove',  e => onMove(e.touches[0].clientX, e.touches[0].clientY),  { passive: true });
+  viewport.addEventListener('touchend', onEnd);
+  viewport.addEventListener('mousedown', e => onStart(e.clientX, e.clientY));
+  window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX, e.clientY); });
+  window.addEventListener('mouseup', onEnd);
+
+  viewport.addEventListener('click', e => {
+    if (Math.abs(swipeMovedX) > 8) return;
+    const slide = e.target.closest('.fc-slide');
+    if (!slide) return;
+    const flipper = slide.querySelector('.flipper');
+    if (flipper) flipper.classList.toggle('flipped');
+  });
+}
+
+// ── QUIZ ──────────────────────────────────────
+function startQuiz() {
+  if (!activeCat) return;
+  quizAnswered = new Array(activeCat.quiz.length).fill(null);
+  quizScore = 0;
+  document.getElementById('quiz-score').classList.remove('show');
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const area = document.getElementById('quiz-body');
+  area.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  activeCat.quiz.forEach((q, qi) => {
+    const answered = quizAnswered[qi];
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="quiz-q">
+        <div class="quiz-q-num">Question ${qi+1} of ${activeCat.quiz.length}</div>
+        <div class="quiz-q-text">${q.q}</div>
+      </div>
+      <div class="quiz-options">
+        ${q.opts.map((opt,oi) => `
+          <button class="quiz-opt ${answered!==null?(oi===q.ans?'correct':(oi===answered?'wrong':'')):''}
+            " onclick="answerQuiz(${qi},${oi})" ${answered!==null?'disabled':''}>
+            <span class="opt-letter">${letters[oi]}</span>${opt}
+          </button>`).join('')}
+      </div>
+      <div class="quiz-explanation ${answered!==null?'show':''}">💡 ${q.exp}</div>`;
+    area.appendChild(div);
+  });
+}
+
+function answerQuiz(qi, oi) {
+  if (quizAnswered[qi] !== null) return;
+  quizAnswered[qi] = oi;
+  if (oi === activeCat.quiz[qi].ans) quizScore++;
+  renderQuiz();
+  if (quizAnswered.every(a => a !== null)) setTimeout(showScore, 500);
+}
+
+function showScore() {
+  const el = document.getElementById('quiz-score');
+  const pct = Math.round((quizScore / activeCat.quiz.length) * 100);
+  const msg = pct===100?'🏆 Perfect!':pct>=75?'🎉 Great job!':pct>=50?'📚 Keep studying!':'💪 Review the reference first!';
+  document.getElementById('score-num').textContent = `${quizScore}/${activeCat.quiz.length}`;
+  document.getElementById('score-label').textContent = `${pct}% — ${msg}`;
+  el.classList.add('show');
+  el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ── INIT ──────────────────────────────────────
+
+// ══════════════════════════════════════════════
+//  PLATFORM DETECTION
+// ══════════════════════════════════════════════
+(function detectPlatform() {
+  const ua = navigator.userAgent;
+  const isMac    = /Macintosh/.test(ua) && !('ontouchend' in document);
+  const isIPad   = /iPad/.test(ua) || (/Macintosh/.test(ua) && 'ontouchend' in document);
+  const isIPhone = /iPhone/.test(ua);
+
+  if (isIPad)        document.body.classList.add('platform-ipados');
+  else if (isIPhone) document.body.classList.add('platform-ios');
+  else if (isMac)    document.body.classList.add('platform-macos');
+  // All others (Android, Windows, etc.) get neither — use default in-page search bar
+})();
+
+// ══════════════════════════════════════════════
+//  UNIFIED SEARCH HANDLER
+//  platform = 'default' | 'ios' | 'ipad' | 'mac'
+// ══════════════════════════════════════════════
+function getSearchEls(platform) {
+  switch(platform) {
+    case 'ios':    return { input: document.getElementById('ios-search-input'),    results: document.getElementById('ios-search-results') };
+    case 'ipad':   return { input: document.getElementById('ipad-search-input'),   results: document.getElementById('ipad-search-results') };
+    case 'mac':    return { input: document.getElementById('mac-search-input'),    results: document.getElementById('mac-search-results') };
+    case 'pencil': return { input: document.getElementById('pencil-bubble-input'), results: document.getElementById('pencil-bubble-results') };
+    default:       return { input: document.getElementById('search-input'),         results: document.getElementById('search-results') };
+  }
+}
+
+let activePlatform = 'default';
+
+function handleSearchFrom(platform) {
+  activePlatform = platform;
+  const { input, results } = getSearchEls(platform);
+  const raw = input.value.trim();
+  kbIndex = -1;
+
+  if (!searchIndex) searchIndex = buildSearchIndex();
+
+  if (!raw) { results.classList.remove('open'); return; }
+
+  // Re-use existing search logic by temporarily routing results
+  _runSearch(raw, results);
+}
+
+// Override handleSearch to use active platform's elements
+function handleSearch() {
+  const plat = document.body.classList.contains('platform-ipados') ? 'ipad'
+             : document.body.classList.contains('platform-macos')  ? 'mac'
+             : 'default';
+  handleSearchFrom(plat);
+}
+
+// Core search logic — decoupled from DOM element IDs
+function _runSearch(raw, resultsEl) {
+  kbIndex = -1;
+  if (!searchIndex) searchIndex = buildSearchIndex();
+  if (!raw) { resultsEl.classList.remove('open'); return; }
+
+  if (isValueQuery(raw)) {
+    const valueHits = [];
+    for (const item of searchIndex) {
+      if (item.type !== 'card') continue;
+      const vm = scoreValueMatch(raw, item.card);
+      if (vm.matched) valueHits.push({ ...item, vm });
+    }
+    valueHits.sort((a,b) => a.vm.score - b.vm.score);
+    if (!valueHits.length) {
+      resultsEl.innerHTML = `<div class="sr-empty">No values containing "<strong>${raw}</strong>"</div>`;
+      resultsEl.classList.add('open'); return;
+    }
+    let html = `<div class="sr-section-label value-section">🔢 Values containing "${raw}"</div>`;
+    valueHits.slice(0,10).forEach(item => {
+      const { highlightedCa, highlightedUs, caHit, usHit } = item.vm;
+      let valDisplay = '';
+      if (flagMode==='ca') valDisplay = caHit?`🇨🇦 ${highlightedCa}`:(item.card.ca?`🇨🇦 ${item.card.ca.split('\n')[0]}`:'');
+      else if (flagMode==='us') valDisplay = usHit?`🇺🇸 ${highlightedUs}`:(item.card.us?`🇺🇸 ${item.card.us.split('\n')[0]}`:'');
+      else {
+        const caL=`🇨🇦 ${highlightedCa||(item.card.ca?item.card.ca.split('\n')[0]:'')}`;
+        const usL=`🇺🇸 ${highlightedUs||(item.card.us?item.card.us.split('\n')[0]:'')}`;
+        valDisplay=(item.card.ca&&item.card.us)?`${caL}<br>${usL}`:caL||usL;
+      }
+      html+=`<div class="sr-item value-hit" onclick="openToCard('${item.cat.id}',${item.cardIdx})">
+        <div class="sr-item-icon">${item.cat.icon}</div>
+        <div class="sr-item-abbr">${item.card.abbr}</div>
+        <div class="sr-item-info"><div class="sr-item-name">${item.card.name}</div><div class="sr-item-cat">${item.cat.name}</div></div>
+        <div class="sr-item-val value-hit">${valDisplay}</div></div>`;
+    });
+    resultsEl.innerHTML=html; resultsEl.classList.add('open');
+    const items=resultsEl.querySelectorAll('.sr-item');
+    if(items.length) { items[0].classList.add('kb-focus'); kbIndex=0; }
+    return;
+  }
+
+  // Normal text search
+  const scored=[];
+  for(const item of searchIndex){
+    if(item.type==='card'){const{score,tier}=scoreCard(raw,item.card,item.cat);if(score<999)scored.push({...item,score,tier});}
+    else{const score=scoreCat(raw,item.cat);if(score<999)scored.push({...item,score,tier:3});}
+  }
+  scored.sort((a,b)=>{const tA=a.type==='card'?a.tier:3,tB=b.type==='card'?b.tier:3;return tA!==tB?tA-tB:a.score-b.score;});
+  const seen=new Set();
+  const unique=scored.filter(i=>{const k=i.type==='card'?`${i.cat.id}::${i.card.abbr}`:`cat::${i.cat.id}`;if(seen.has(k))return false;seen.add(k);return true;});
+  if(!unique.length){resultsEl.innerHTML=`<div class="sr-empty">No results for "<strong>${raw}</strong>"</div>`;resultsEl.classList.add('open');return;}
+
+  const t1=unique.filter(i=>i.type==='card'&&i.tier===1);
+  const t2=unique.filter(i=>i.type==='card'&&i.tier===2);
+  const cats=unique.filter(i=>i.type==='cat').slice(0,3);
+  const showCards=t1.length?t1.slice(0,8):t2.slice(0,6);
+
+  let html='';
+  if(showCards.length){
+    html+=`<div class="sr-section-label">↑↓ Navigate · Enter to open</div>`;
+    showCards.forEach(item=>{
+      let v='';
+      if(flagMode==='us') v=item.card.us?`🇺🇸 ${item.card.us.split('\n')[0]}`:(item.card.ca?`🇨🇦 ${item.card.ca.split('\n')[0]}`:'');
+      else if(flagMode==='ca') v=item.card.ca?`🇨🇦 ${item.card.ca.split('\n')[0]}`:(item.card.us?`🇺🇸 ${item.card.us.split('\n')[0]}`:'');
+      else{const ca=item.card.ca?`🇨🇦 ${item.card.ca.split('\n')[0]}`:'',us=item.card.us?`🇺🇸 ${item.card.us.split('\n')[0]}`:'';v=ca&&us?`${ca} · ${us}`:ca||us;}
+      html+=`<div class="sr-item" onclick="openToCard('${item.cat.id}',${item.cardIdx})">
+        <div class="sr-item-icon">${item.cat.icon}</div>
+        <div class="sr-item-abbr">${item.card.abbr}</div>
+        <div class="sr-item-info">
+          <div class="sr-item-name">${item.card.name}</div>
+          ${item.card.alt?`<div class="sr-item-alt">${item.card.alt.split(' · ').slice(0,2).join(' · ')}</div>`:''}
+          <div class="sr-item-cat">${item.cat.name}</div>
+        </div>
+        <div class="sr-item-val">${v}</div></div>`;
+    });
+  }
+  const goodCats=cats.filter(i=>i.score<=4);
+  const showCats=showCards.length===0?cats:goodCats;
+  if(showCats.length){
+    html+=`<div class="sr-section-label">Categories</div>`;
+    showCats.forEach(item=>{html+=`<div class="sr-item" onclick="openCategory(DB.find(c=>c.id==='${item.cat.id}'))">
+      <div class="sr-item-icon">${item.cat.icon}</div>
+      <div class="sr-item-abbr" style="font-size:0.75rem">${item.cat.name}</div>
+      <div class="sr-item-info"><div class="sr-item-cat">${item.cat.cards.length} cards</div></div></div>`;});
+  }
+  resultsEl.innerHTML=html; resultsEl.classList.add('open');
+  const items=Array.from(resultsEl.querySelectorAll('.sr-item'));
+  if(items.length){items[0].classList.add('kb-focus');kbIndex=0;}
+}
+
+// ══════════════════════════════════════════════
+//  iOS OVERLAY  — keyboard pulls up with FAB tap
+// ══════════════════════════════════════════════
+function openIosOverlay() {
+  const overlay = document.getElementById('ios-search-overlay');
+  const input   = document.getElementById('ios-search-input');
+
+  overlay.classList.add('open');
+
+  // iOS requires the element to be visible AND focused in same user-gesture tick.
+  // We create a temporary invisible input, focus it immediately (within the tap
+  // gesture), then swap to the real input once the overlay is painted.
+  const tmp = document.createElement('input');
+  tmp.setAttribute('type', 'text');
+  tmp.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;';
+  document.body.appendChild(tmp);
+  tmp.focus();                     // triggers keyboard within gesture tick
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {  // wait two frames so overlay is fully painted
+      input.focus();               // move focus to real input — keyboard stays up
+      tmp.remove();
+    });
+  });
+}
+
+function closeIosOverlay() {
+  const overlay = document.getElementById('ios-search-overlay');
+  overlay.classList.remove('open');
+  document.getElementById('ios-search-input').value = '';
+  document.getElementById('ios-search-results').classList.remove('open');
+  document.getElementById('ios-search-results').innerHTML = '';
+}
+
+// ══════════════════════════════════════════════
+//  macOS SEARCH PANEL (slides down)
+// ══════════════════════════════════════════════
+let macSearchOpen = false;
+function openMacSearch(seedChar) {
+  const panel = document.getElementById('mac-hidden-search');
+  const input = document.getElementById('mac-search-input');
+  panel.classList.add('mac-open');
+  macSearchOpen = true;
+  input.focus();
+  if (seedChar) { input.value = seedChar; handleSearchFrom('mac'); }
+  else { input.select(); }
+}
+function closeMacSearch() {
+  document.getElementById('mac-hidden-search').classList.remove('mac-open');
+  document.getElementById('mac-search-results').classList.remove('open');
+  document.getElementById('mac-search-input').value = '';
+  macSearchOpen = false;
+}
+
+// ══════════════════════════════════════════════
+//  APPLE PENCIL HOVER (iPadOS only)
+//  Uses pointer events with pointerType === 'pen'
+// ══════════════════════════════════════════════
+(function initPencilHover() {
+  if (!document.body.classList.contains('platform-ipados')) return;
+
+  const bubble   = document.getElementById('pencil-bubble');
+  const input    = document.getElementById('pencil-bubble-input');
+  const results  = document.getElementById('pencil-bubble-results');
+  let   hideTimer = null;
+  let   bubbleVisible = false;
+
+  // Margin from pencil tip to bubble edge
+  const OFFSET_X = 12;
+  const OFFSET_Y = 24;
+  const BUBBLE_W = 320;
+  const BUBBLE_H = 120; // approximate before results load
+
+  function showBubble(x, y) {
+    clearTimeout(hideTimer);
+
+    // Position bubble so it never goes off-screen
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = x + OFFSET_X;
+    let top  = y + OFFSET_Y;
+
+    // Flip left if too close to right edge
+    if (left + BUBBLE_W > vw - 12) left = x - BUBBLE_W - OFFSET_X;
+    // Flip up if too close to bottom
+    if (top + BUBBLE_H > vh - 12) top = y - BUBBLE_H - OFFSET_Y;
+
+    bubble.style.left = Math.max(8, left) + 'px';
+    bubble.style.top  = Math.max(8, top)  + 'px';
+
+    if (!bubbleVisible) {
+      bubble.classList.add('visible');
+      bubbleVisible = true;
+    }
+  }
+
+  function schedulehide() {
+    hideTimer = setTimeout(() => {
+      // Only hide if Pencil is no longer over the bubble
+      bubble.classList.remove('visible');
+      bubbleVisible = false;
+      // Clear search when bubble hides
+      setTimeout(() => {
+        if (!bubbleVisible) {
+          input.value = '';
+          results.classList.remove('open');
+          results.innerHTML = '';
+        }
+      }, 300);
+    }, 1200); // 1.2s grace period — enough to tap into the input
+  }
+
+  // Pencil hover (pointerType = 'pen', no button pressed)
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'pen') return;
+    showBubble(e.clientX, e.clientY);
+  });
+
+  // Pencil leaves the hover range
+  document.addEventListener('pointerleave', e => {
+    if (e.pointerType !== 'pen') return;
+    schedulehide();
+  });
+
+  // Cancel hide if Pencil comes back or user taps into bubble
+  bubble.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+  bubble.addEventListener('pointerleave', schedulehide);
+  input.addEventListener('focus', () => clearTimeout(hideTimer));
+  input.addEventListener('blur', schedulehide);
+
+  // Tapping anywhere outside bubble closes it
+  document.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'pen') return; // let pen handle its own flow
+    if (!bubble.contains(e.target)) schedulehide();
+  });
+})();
+
+// ══════════════════════════════════════════════
+//  UPDATED KEYBOARD HANDLER (platform-aware)
+// ══════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const isMacOS   = document.body.classList.contains('platform-macos');
+  const isIPadOS  = document.body.classList.contains('platform-ipados');
+  const isIOS     = document.body.classList.contains('platform-ios');
+
+  // Active input / results for current platform
+  const plat = isMacOS ? 'mac' : isIPadOS ? 'ipad' : 'default';
+  const { input, results } = getSearchEls(plat);
+  const isTypingInSearch = document.activeElement === input ||
+    document.activeElement === document.getElementById('ios-search-input');
+  const isTypingAnywhere = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+  const isOpen = results.classList.contains('open') ||
+    document.getElementById('ios-search-results')?.classList.contains('open');
+
+  // [ = Back, ] = Forward
+  if ((e.key==='['||e.key===']') && !isTypingAnywhere) {
+    e.preventDefault();
+    e.key==='['?navBack():navForward(); return;
+  }
+
+  // Escape — close whatever is open
+  if (e.key === 'Escape') {
+    if (isIOS && document.getElementById('ios-search-overlay').classList.contains('open')) {
+      closeIosOverlay(); return;
+    }
+    if (isMacOS && macSearchOpen) { closeMacSearch(); return; }
+    if (isOpen) { results.classList.remove('open'); input.blur(); kbIndex=-1; return; }
+  }
+
+  // Arrow + Enter in open results
+  if (isOpen) {
+    const activeResults = isIOS
+      ? document.getElementById('ios-search-results')
+      : results;
+    const items = Array.from(activeResults.querySelectorAll('.sr-item'));
+    if (items.length) {
+      if (e.key==='ArrowDown'){e.preventDefault();updateKbFocus(items,Math.min(kbIndex+1,items.length-1));return;}
+      if (e.key==='ArrowUp'){e.preventDefault();updateKbFocus(items,Math.max(kbIndex-1,0));return;}
+      if (e.key==='Enter'){e.preventDefault();const t=kbIndex>=0?kbIndex:0;if(items[t]){items[t].click();kbIndex=-1;}return;}
+    }
+  }
+
+  // / = focus search
+  if (e.key==='/' && !isTypingAnywhere) {
+    e.preventDefault();
+    if (isMacOS) openMacSearch();
+    else if (isIOS) openIosOverlay();
+    else focusSearch();
+    return;
+  }
+
+  // Auto-type → search
+  if (!isTypingAnywhere && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length===1) {
+    e.preventDefault();
+    if (isMacOS) openMacSearch(e.key);
+    else if (isIOS) { openIosOverlay(); setTimeout(()=>{const i=document.getElementById('ios-search-input');i.value=e.key;handleSearchFrom('ios');},120); }
+    else focusSearch(e.key);
+  }
+});
+
+renderHome('');
+initSwipe();
+</script>
+</body>
+</html>
